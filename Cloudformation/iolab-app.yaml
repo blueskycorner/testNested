@@ -5,6 +5,9 @@ Parameters:
   TemplateBucket:
     Description: S3 bucket from which nested templates are fetched
     Type: String
+  appName:
+    Description: App Name
+    Type: String
   vpc:
     Description: vpc to work with
     Type: String
@@ -78,7 +81,7 @@ Resources:
     Properties:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-network.yaml
       Parameters:
-        appName: boiron
+        appName: !Ref appName
         vpc: !Ref vpc
         albSG: !Ref albSG
         dbPort: 3306
@@ -93,7 +96,7 @@ Resources:
     Properties:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-server.yaml
       Parameters:
-        appName: boiron
+        appName: !Ref appName
         keypairName: !Ref keypairName
         bastionInstanceType: !Ref bastionInstanceType
         bastionAmiId: !Ref bastionAmiId
@@ -120,5 +123,22 @@ Resources:
         dbMasterPassword: !Ref dbMasterPassword
         dbPort: !Ref dbPort
         dbStorageType: !Ref dbStorageType
+
+Outputs:
+  OutRdsEndpoint:
+    Description: RDS Endpoint
+    Value: !GetAtt appServer.Outputs.OutRdsEndpoint
+
+  OutEipBastion:
+    Description: Bastion IP
+    Value: !GetAtt appServer.Outputs.OutEipBastion
+
+  OutPreproQualifIP:
+    Description: Preprod & Qualif private IP
+    Value: !GetAtt appServer.Outputs.OutPreproQualifIP
+
+  OutProdIP:
+    Description: Prod private IP
+    Value: !GetAtt appServer.Outputs.OutProdIP
 
 

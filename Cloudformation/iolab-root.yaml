@@ -70,6 +70,7 @@ Resources:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
       Parameters:
         TemplateBucket: !Ref TemplateBucket
+        appName: boiron
         vpc: !GetAtt vpc.Outputs.IOLABVPC
         albSG: !GetAtt vpc.Outputs.ALBSG
         routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
@@ -92,3 +93,115 @@ Resources:
         dbMasterPassword: !Ref dbMasterPassword
         dbPort: !Ref dbPort
         dbStorageType: !Ref dbStorageType
+
+  Vicat:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
+      Parameters:
+        TemplateBucket: !Ref TemplateBucket
+        appName: vicat
+        vpc: !GetAtt vpc.Outputs.IOLABVPC
+        albSG: !GetAtt vpc.Outputs.ALBSG
+        routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
+        classCSubnetPrivateA: 4
+        classCSubnetPrivateB: 5
+        classCSubnetPublicA: 6
+        bastionSourceIp: 0.0.0.0/0
+        keypairName: !Ref KeyPairName
+        bastionInstanceType: !Ref bastionInstanceType
+        bastionAmiId: !Ref bastionAmiId
+        serverInstanceType: !Ref serverInstanceType
+        serverAmiId: !Ref serverAmiId
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbName: !Ref dbName
+        dbEngine: mysql
+        dbEngineVersion: 5.7.23
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType
+
+  Mutual:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
+      Parameters:
+        TemplateBucket: !Ref TemplateBucket
+        appName: mutual
+        vpc: !GetAtt vpc.Outputs.IOLABVPC
+        albSG: !GetAtt vpc.Outputs.ALBSG
+        routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
+        classCSubnetPrivateA: 8
+        classCSubnetPrivateB: 9
+        classCSubnetPublicA: 10
+        bastionSourceIp: 0.0.0.0/0
+        keypairName: !Ref KeyPairName
+        bastionInstanceType: !Ref bastionInstanceType
+        bastionAmiId: !Ref bastionAmiId
+        serverInstanceType: !Ref serverInstanceType
+        serverAmiId: !Ref serverAmiId
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbName: !Ref dbName
+        dbEngine: mysql
+        dbEngineVersion: 5.7.23
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType
+
+Outputs:
+  # BOIRON OUTPUTS
+  BoironRdsEndpoint:
+    Description: Boiron RDS Endpoint
+    Value: !GetAtt boiron.Outputs.OutRdsEndpoint
+
+  BoironEipBastion:
+    Description: Boiron Bastion IP
+    Value: !GetAtt boiron.Outputs.OutEipBastion
+
+  BoironPreproQualifIP:
+    Description: Boiron preprod & qualif private IP
+    Value: !GetAtt boiron.Outputs.OutPreproQualifIP
+
+  BoironProdIP:
+    Description: Boiron Prod private IP
+    Value: !GetAtt boiron.Outputs.OutProdIP
+
+  # VICAT OUTPUTS
+  VicatRdsEndpoint:
+    Description: Vicat RDS Endpoint
+    Value: !GetAtt Vicat.Outputs.OutRdsEndpoint
+
+  VicatEipBastion:
+    Description: Vicat Bastion IP
+    Value: !GetAtt Vicat.Outputs.OutEipBastion
+
+  VicatPreproQualifIP:
+    Description: Vicat preprod & qualif private IP
+    Value: !GetAtt Vicat.Outputs.OutPreproQualifIP
+
+  VicatProdIP:
+    Description: Vicat Prod private IP
+    Value: !GetAtt Vicat.Outputs.OutProdIP
+
+  # MUTUAL OUTPUTS
+  MutualRdsEndpoint:
+    Description: Mutual RDS Endpoint
+    Value: !GetAtt Mutual.Outputs.OutRdsEndpoint
+
+  MutualEipBastion:
+    Description: Mutual Bastion IP
+    Value: !GetAtt Mutual.Outputs.OutEipBastion
+
+  MutualPreproQualifIP:
+    Description: Mutual preprod & qualif private IP
+    Value: !GetAtt Mutual.Outputs.OutPreproQualifIP
+
+  MutualProdIP:
+    Description: Mutual Prod private IP
+    Value: !GetAtt Mutual.Outputs.OutProdIP

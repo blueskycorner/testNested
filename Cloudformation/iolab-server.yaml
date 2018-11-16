@@ -149,3 +149,20 @@ Resources:
       StorageType: !Ref dbStorageType
       VPCSecurityGroups: 
       - !Ref rdsSG
+
+Outputs:
+  OutRdsEndpoint:
+    Description: RDS Endpoint
+    Value: !GetAtt rds.Endpoint.Address
+
+  OutEipBastion:
+    Description: Bastion IP
+    Value: !Ref eipBastion
+
+  OutPreproQualifIP:
+    Description: Prod IP
+    Value: !GetAtt preprodQualif.PrivateIp
+
+  OutProdIP:
+    Description: Prod IP
+    Value: !GetAtt prod.PrivateIp
