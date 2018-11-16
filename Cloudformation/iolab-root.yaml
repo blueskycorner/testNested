@@ -22,6 +22,41 @@ Parameters:
     Description: Server ami ID
     Type: String
     Default: ami-059eeca93cf09eebd
+  dbAllocatedStorage:
+    Description: RDS allocated storage
+    Type: Number
+    Default: 10
+  dbInstanceClass:
+    Description: RDS instance class
+    Type: String
+    Default: db.t2.micro
+  dbBackupRetentionPeriod:
+    Description: RDS backup retention period
+    Type: Number
+    Default: 7
+  dbName:
+    Description: RDS db name for the first DB
+    Type: String
+    Default: app
+  dbEngine:
+    Description: RDS db engine
+    Type: String
+    Default: mysql
+  dbMasterUsername:
+    Description: RDS master user name
+    Type: String
+    Default: master
+  dbMasterPassword:
+    Description: RDS master password
+    Type: String
+  dbPort:
+    Description: RDS db port
+    Type: Number
+    Default: 3306
+  dbStorageType:
+    Description: RDS storage type
+    Type: String
+    Default: gp2
 
 Resources:
   vpc:
@@ -47,3 +82,13 @@ Resources:
         bastionAmiId: !Ref bastionAmiId
         serverInstanceType: !Ref serverInstanceType
         serverAmiId: !Ref serverAmiId
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbName: !Ref dbName
+        dbEngine: mysql
+        dbEngineVersion: 5.7.23
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType

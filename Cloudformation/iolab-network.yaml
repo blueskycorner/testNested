@@ -170,3 +170,6 @@ Outputs:
   OutProdSG:
     Description: Prod security group
     Value: !Ref ProdSG
+  OutRDSSG:
+    Description: Prod security group
+    Value: !Ref RDSSG

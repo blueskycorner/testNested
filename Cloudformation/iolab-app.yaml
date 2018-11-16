@@ -41,6 +41,36 @@ Parameters:
   serverAmiId:
     Description: server AMI id
     Type: String
+  dbAllocatedStorage:
+    Description: RDS allocated storage
+    Type: Number
+  dbInstanceClass:
+    Description: RDS instance class
+    Type: String
+  dbBackupRetentionPeriod:
+    Description: RDS backup retention period
+    Type: Number
+  dbName:
+    Description: RDS db name for the first DB
+    Type: String
+  dbEngine:
+    Description: RDS db engine
+    Type: String
+  dbEngineVersion:
+    Description: RDS db engine version
+    Type: String
+  dbMasterUsername:
+    Description: RDS master user name
+    Type: String
+  dbMasterPassword:
+    Description: RDS master password
+    Type: String
+  dbPort:
+    Description: RDS db port
+    Type: Number
+  dbStorageType:
+    Description: RDS storage type
+    Type: String
 
 Resources:
   appNetwork:
@@ -74,5 +104,21 @@ Resources:
         serverSubnetId: !GetAtt appNetwork.Outputs.OutSubnetPrivateA
         preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
         prodSG: !GetAtt appNetwork.Outputs.OutProdSG
+        rdsSubnets: 
+          Fn::Join:
+            - ','
+            - -  !GetAtt appNetwork.Outputs.OutSubnetPrivateA
+              -  !GetAtt appNetwork.Outputs.OutSubnetPrivateB
+        rdsSG: !GetAtt appNetwork.Outputs.OutRDSSG
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbName: !Ref dbName
+        dbEngine: !Ref dbEngine
+        dbEngineVersion: !Ref dbEngineVersion
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType
 
 

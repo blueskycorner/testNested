@@ -13,7 +13,7 @@ TEMPLATE_NAME="iolab-root.yaml"
 KEY_PAIR_NAME="vygon-bastion-dev"
 BASTION_INSTANCE_TYPE="t2.micro"
 SERVER_INSTANCE_TYPE="t2.micro"
-
+DB_MASTER_PASSWORD="master1234"
 
 usage()
 {
@@ -72,6 +72,7 @@ if [ $1 == "deploy" ]; then
                               KeyPairName=${KEY_PAIR_NAME} \
                               bastionInstanceType=${BASTION_INSTANCE_TYPE} \
                               serverInstanceType=${SERVER_INSTANCE_TYPE} \
+                              dbMasterPassword=${DB_MASTER_PASSWORD} \
         --capabilities CAPABILITY_IAM \
          --profile ${AWS_PROFILE} \
 

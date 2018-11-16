@@ -30,10 +30,46 @@ Parameters:
     Description: server subnet id
     Type: String
   preprodQualifSG:
-    Description: bastion security group
+    Description: Preprod & Qualif security group
     Type: String
   prodSG:
-    Description: bastion security group
+    Description: Prod security group
+    Type: String
+  rdsSubnets:
+    Description: RDS Subnets
+    Type: CommaDelimitedList
+  rdsSG:
+    Description: RDS security group
+    Type: String
+  dbAllocatedStorage:
+    Description: RDS allocated storage
+    Type: Number
+  dbInstanceClass:
+    Description: RDS instance class
+    Type: String
+  dbBackupRetentionPeriod:
+    Description: RDS backup retention period
+    Type: Number
+  dbName:
+    Description: RDS db name for the first DB
+    Type: String
+  dbEngine:
+    Description: RDS db engine
+    Type: String
+  dbEngineVersion:
+    Description: RDS db engine version
+    Type: String
+  dbMasterUsername:
+    Description: RDS master user name
+    Type: String
+  dbMasterPassword:
+    Description: RDS master password
+    Type: String
+  dbPort:
+    Description: RDS db port
+    Type: Number
+  dbStorageType:
+    Description: RDS storage type
     Type: String
 
 Resources:
@@ -71,12 +107,6 @@ Resources:
       - Key: Name
         Value: !Sub ${appName}-preprodQualif
 
-  eipPreprodQualif:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-      InstanceId: !Ref preprodQualif
-
   prod:
     Type: AWS::EC2::Instance
     Properties:
@@ -91,8 +121,31 @@ Resources:
       - Key: Name
         Value: !Sub ${appName}-prod
 
-  eipProd:
-    Type: AWS::EC2::EIP
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
-      Domain: vpc
-      InstanceId: !Ref prod
+      DBSubnetGroupDescription: RDS Subnet Group
+      SubnetIds: !Ref rdsSubnets
+      # SubnetIds:
+      # - subnet-091df959eebb3b649
+      # - subnet-0740f12b8ec630a6c
+
+  rds:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref dbAllocatedStorage
+      DBInstanceClass: !Ref dbInstanceClass
+      BackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+      DBName: !Ref dbName
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      Engine: !Ref dbEngine
+      EngineVersion: !Ref dbEngineVersion
+      MasterUsername: !Ref dbMasterUsername
+      MasterUserPassword: !Ref dbMasterPassword
+      MultiAZ: false
+      Port: !Ref dbPort
+      PubliclyAccessible: false
+      StorageEncrypted: false
+      StorageType: !Ref dbStorageType
+      VPCSecurityGroups: 
+      - !Ref rdsSG
