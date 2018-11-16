@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IO Lab VPC
+
+# Parameters:
+#   TemplateBucket:
+#     Description: S3 bucket from which nested templates are fetched
+#     Type: String
+
+Resources:
+  vpc:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: IOLAB-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref vpc
+      InternetGatewayId: !Ref InternetGateway
+  
+  RouteTablePublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+
+  RouteTablePublicInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  albSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for Application Load balancer
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 443 # TO BE CONFIRMED
+        ToPort: 443 # TO BE CONFIRMED
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80 # TO BE CONFIRMED
+        ToPort: 80 # TO BE CONFIRMED
+        CidrIp: 0.0.0.0/0
+      Tags:
+      - Key: Name
+        Value: ALBSG
+
+Outputs:
+  IOLABVPC:
+    Description: IOLAB VPC
+    Value: !Ref vpc
+
+  IOLABRouteTablePublic:
+    Description: IOLAB Public Route table
+    Value: !Ref RouteTablePublic
+
+  ALBSG:
+    Description: IOLAB Application load balancer Security group
+    Value: !Ref albSG

@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IO Lab App
+
+Parameters:
+  TemplateBucket:
+    Description: S3 bucket from which nested templates are fetched
+    Type: String
+  vpc:
+    Description: vpc to work with
+    Type: String
+  routeTablePublic:
+    Description: public route table
+    Type: String
+  albSG:
+    Description: Application Load Balancer
+    Type: String
+  classCSubnetPublicA:
+    Description: class C network for Subnet Public A
+    Type: Number
+  classCSubnetPrivateA:
+    Description: class C network for Subnet Private A
+    Type: Number
+  classCSubnetPrivateB:
+    Description: class C network for Subnet Private B
+    Type: Number
+  bastionSourceIp:
+    Description: Cidr block allowed to access bastion
+    Type: String
+  keypairName:
+    Description: key pair name
+    Type: String
+  bastionInstanceType:
+    Description: bastion instance type
+    Type: String
+  bastionAmiId:
+    Description: bastion AMI id
+    Type: String
+  serverInstanceType:
+    Description: server instance type
+    Type: String
+  serverAmiId:
+    Description: server AMI id
+    Type: String
+
+Resources:
+  appNetwork:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-network.yaml
+      Parameters:
+        appName: boiron
+        vpc: !Ref vpc
+        albSG: !Ref albSG
+        dbPort: 3306
+        routeTablePublic: !Ref routeTablePublic
+        classCSubnetPublicA: !Ref classCSubnetPublicA
+        classCSubnetPrivateA: !Ref classCSubnetPrivateA
+        classCSubnetPrivateB: !Ref classCSubnetPrivateB
+        bastionSourceIp: !Ref bastionSourceIp
+        
+  appServer:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-server.yaml
+      Parameters:
+        appName: boiron
+        keypairName: !Ref keypairName
+        bastionInstanceType: !Ref bastionInstanceType
+        bastionAmiId: !Ref bastionAmiId
+        serverInstanceType: !Ref serverInstanceType
+        serverAmiId: !Ref serverAmiId
+        bastionSubnetId: !GetAtt appNetwork.Outputs.OutSubnetPublicA
+        bastionSG: !GetAtt appNetwork.Outputs.OutBastionSG
+        serverSubnetId: !GetAtt appNetwork.Outputs.OutSubnetPrivateA
+        preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
+        prodSG: !GetAtt appNetwork.Outputs.OutProdSG
+
+

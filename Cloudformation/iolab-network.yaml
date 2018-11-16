@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IO Lab Network & Security group
+
+Parameters:
+  appName:
+    Description: Application Name
+    Type: String
+  vpc:
+    Description: vpc to work with
+    Type: String
+  routeTablePublic:
+    Description: public route table
+    Type: String
+  albSG:
+    Description: Application Load Balancer
+    Type: String
+  classCSubnetPublicA:
+    Description: class C network for Subnet Public A
+    Type: Number
+  classCSubnetPrivateA:
+    Description: class C network for Subnet Private A
+    Type: Number
+  classCSubnetPrivateB:
+    Description: class C network for Subnet Private B
+    Type: Number
+  dbPort:
+    Description: port for accessing data base
+    Type: Number
+  bastionSourceIp:
+    Description: Cidr block allowed to access bastion
+    Type: String
+
+Resources:
+  SubnetPublicA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Sub 10.0.${classCSubnetPublicA}.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-SubnetPublicA
+
+  SubnetPrivateA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Sub 10.0.${classCSubnetPrivateA}.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-SubnetPrivateA
+
+  SubnetPrivateB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Sub 10.0.${classCSubnetPrivateB}.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-SubnetPrivateB
+
+  RouteTableAssociationPublicA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublicA
+      RouteTableId: !Ref routeTablePublic
+
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for bastion
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        CidrIp: !Ref bastionSourceIp
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref bastionSourceIp
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-BastionSG
+
+  ProdSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for production server
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 443  # TO BE CONFIRMED
+        ToPort: 443  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref albSG
+      - IpProtocol: tcp
+        FromPort: 80  # TO BE CONFIRMED
+        ToPort: 80  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref albSG
+      - IpProtocol: tcp
+        FromPort: 22  # TO BE CONFIRMED
+        ToPort: 22  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref BastionSG
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-ProdSG
+
+  PreprodQualifSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for pre-production & Qualif
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 443  # TO BE CONFIRMED
+        ToPort: 443  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref albSG # TO BE CONFIRMED
+      - IpProtocol: tcp
+        FromPort: 80  # TO BE CONFIRMED
+        ToPort: 80  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref albSG # TO BE CONFIRMED
+      - IpProtocol: tcp
+        FromPort: 22  # TO BE CONFIRMED
+        ToPort: 22  # TO BE CONFIRMED
+        SourceSecurityGroupId: !Ref BastionSG
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-PreprodQualifSG
+
+  RDSSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup RDS
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        SourceSecurityGroupId: !Ref BastionSG
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        SourceSecurityGroupId: !Ref PreprodQualifSG
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        SourceSecurityGroupId: !Ref ProdSG
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-RDSSG
+
+Outputs:
+  OutSubnetPrivateA:
+    Description: Subnet Private A
+    Value: !Ref SubnetPrivateA
+  OutSubnetPrivateB:
+    Description: Subnet Private B
+    Value: !Ref SubnetPrivateB
+  OutSubnetPublicA:
+    Description: Subnet Public A
+    Value: !Ref SubnetPublicA
+  OutBastionSG:
+    Description: Bastion security group
+    Value: !Ref BastionSG
+  OutPreprodQualifSG:
+    Description: Preproduction & Qualif security group
+    Value: !Ref PreprodQualifSG
+  OutProdSG:
+    Description: Prod security group
+    Value: !Ref ProdSG
