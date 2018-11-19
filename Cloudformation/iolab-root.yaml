@@ -71,6 +71,8 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-vpc.yaml
+      Parameters:
+        ProjectName: IOLAB
 
   lambda:
     Type: AWS::CloudFormation::Stack
@@ -88,10 +90,6 @@ Resources:
         appName: boiron
         vpc: !GetAtt vpc.Outputs.IOLABVPC
         albSG: !GetAtt vpc.Outputs.ALBSG
-        routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
-        classCSubnetPrivateA: 0
-        classCSubnetPrivateB: 1
-        classCSubnetPublicA: 2
         bastionSourceIp: 0.0.0.0/0
         keypairName: !Ref KeyPairName
         bastionInstanceType: !Ref bastionInstanceType
@@ -110,6 +108,13 @@ Resources:
         dbStorageType: !Ref dbStorageType
         preferredBackupWindow: !Ref preferredBackupWindow
         preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+        bastionSubnetId: !GetAtt vpc.Outputs.OutSubnetPublicA
+        serverSubnetId: !GetAtt vpc.Outputs.OutSubnetPrivateA
+        rdsSubnets: 
+          Fn::Join:
+            - ','
+            - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
+              -  !GetAtt vpc.Outputs.OutSubnetPrivateB
 
   # Vicat:
   #   Type: AWS::CloudFormation::Stack

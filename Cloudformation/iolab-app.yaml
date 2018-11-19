@@ -11,21 +11,9 @@ Parameters:
   vpc:
     Description: vpc to work with
     Type: String
-  routeTablePublic:
-    Description: public route table
-    Type: String
   albSG:
     Description: Application Load Balancer
     Type: String
-  classCSubnetPublicA:
-    Description: class C network for Subnet Public A
-    Type: Number
-  classCSubnetPrivateA:
-    Description: class C network for Subnet Private A
-    Type: Number
-  classCSubnetPrivateB:
-    Description: class C network for Subnet Private B
-    Type: Number
   bastionSourceIp:
     Description: Cidr block allowed to access bastion
     Type: String
@@ -80,6 +68,15 @@ Parameters:
   preferredMaintenanceWindow:
     Description: RDS prefered maintenance window
     Type: String
+  bastionSubnetId:
+    Description: Bastion subnet Id
+    Type: String
+  serverSubnetId:
+    Description: Server subnet Id
+    Type: String
+  rdsSubnets:
+    Description: RDS subnet Ids
+    Type: String
 
 Resources:
   appNetwork:
@@ -91,10 +88,6 @@ Resources:
         vpc: !Ref vpc
         albSG: !Ref albSG
         dbPort: 3306
-        routeTablePublic: !Ref routeTablePublic
-        classCSubnetPublicA: !Ref classCSubnetPublicA
-        classCSubnetPrivateA: !Ref classCSubnetPrivateA
-        classCSubnetPrivateB: !Ref classCSubnetPrivateB
         bastionSourceIp: !Ref bastionSourceIp
         
   appServer:
@@ -108,16 +101,12 @@ Resources:
         bastionAmiId: !Ref bastionAmiId
         serverInstanceType: !Ref serverInstanceType
         serverAmiId: !Ref serverAmiId
-        bastionSubnetId: !GetAtt appNetwork.Outputs.OutSubnetPublicA
+        bastionSubnetId: !Ref bastionSubnetId
         bastionSG: !GetAtt appNetwork.Outputs.OutBastionSG
-        serverSubnetId: !GetAtt appNetwork.Outputs.OutSubnetPrivateA
+        serverSubnetId: !Ref serverSubnetId
         preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
         prodSG: !GetAtt appNetwork.Outputs.OutProdSG
-        rdsSubnets: 
-          Fn::Join:
-            - ','
-            - -  !GetAtt appNetwork.Outputs.OutSubnetPrivateA
-              -  !GetAtt appNetwork.Outputs.OutSubnetPrivateB
+        rdsSubnets: !Ref rdsSubnets
         rdsSG: !GetAtt appNetwork.Outputs.OutRDSSG
         dbAllocatedStorage: !Ref dbAllocatedStorage
         dbInstanceClass: !Ref dbInstanceClass

@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: IO Lab VPC
 
-# Parameters:
-#   TemplateBucket:
-#     Description: S3 bucket from which nested templates are fetched
-#     Type: String
+Parameters:
+  ProjectName:
+    Description: project name
+    Type: String
 
 Resources:
   vpc:
@@ -16,7 +16,7 @@ Resources:
       InstanceTenancy: default
       Tags:
       - Key: Name
-        Value: IOLAB-vpc
+        Value: !Sub ${ProjectName}-vpc
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -31,6 +31,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-RouteTablePublic
 
   RouteTablePublicInternetRoute:
     Type: AWS::EC2::Route
@@ -39,6 +42,58 @@ Resources:
       RouteTableId: !Ref RouteTablePublic
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+
+  SubnetPublicA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Sub 10.0.0.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-SubnetPublicA
+
+  SubnetPublicB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Sub 10.0.1.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-SubnetPublicB
+
+  SubnetPrivateA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Sub 10.0.2.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-SubnetPrivateA
+
+  SubnetPrivateB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Sub 10.0.3.0/24
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-SubnetPrivateB
+
+  RouteTableAssociationPublicA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublicA
+      RouteTableId: !Ref RouteTablePublic
+
+  RouteTableAssociationPublicB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublicB
+      RouteTableId: !Ref RouteTablePublic
 
   albSG:
     Type: AWS::EC2::SecurityGroup
@@ -57,7 +112,7 @@ Resources:
         CidrIp: 0.0.0.0/0
       Tags:
       - Key: Name
-        Value: ALBSG
+        Value: !Sub ${ProjectName}-ALBSG
 
 Outputs:
   IOLABVPC:
@@ -71,3 +126,19 @@ Outputs:
   ALBSG:
     Description: IOLAB Application load balancer Security group
     Value: !Ref albSG
+
+  OutSubnetPublicA:
+    Description: Subnet Public A
+    Value: !Ref SubnetPublicA
+
+  OutSubnetPublicB:
+    Description: Subnet Public B
+    Value: !Ref SubnetPublicB
+
+  OutSubnetPrivateA:
+    Description: Subnet Private A
+    Value: !Ref SubnetPrivateA
+
+  OutSubnetPrivateB:
+    Description: Subnet Private B
+    Value: !Ref SubnetPrivateB

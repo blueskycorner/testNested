@@ -137,8 +137,8 @@ Resources:
       DBSubnetGroupDescription: RDS Subnet Group
       SubnetIds: !Ref rdsSubnets
       # SubnetIds:
-      # - subnet-091df959eebb3b649
-      # - subnet-0740f12b8ec630a6c
+      # - subnet-02afb78c27a119988
+      # - subnet-0392ef04f8f6f7173
 
   rds:
     Type: AWS::RDS::DBInstance

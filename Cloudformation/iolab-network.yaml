@@ -8,21 +8,9 @@ Parameters:
   vpc:
     Description: vpc to work with
     Type: String
-  routeTablePublic:
-    Description: public route table
-    Type: String
   albSG:
     Description: Application Load Balancer
     Type: String
-  classCSubnetPublicA:
-    Description: class C network for Subnet Public A
-    Type: Number
-  classCSubnetPrivateA:
-    Description: class C network for Subnet Private A
-    Type: Number
-  classCSubnetPrivateB:
-    Description: class C network for Subnet Private B
-    Type: Number
   dbPort:
     Description: port for accessing data base
     Type: Number
@@ -31,42 +19,6 @@ Parameters:
     Type: String
 
 Resources:
-  SubnetPublicA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: !Select [0, !GetAZs ]
-      CidrBlock: !Sub 10.0.${classCSubnetPublicA}.0/24
-      VpcId: !Ref vpc
-      Tags:
-      - Key: Name
-        Value: !Sub ${appName}-SubnetPublicA
-
-  SubnetPrivateA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: !Select [0, !GetAZs ]
-      CidrBlock: !Sub 10.0.${classCSubnetPrivateA}.0/24
-      VpcId: !Ref vpc
-      Tags:
-      - Key: Name
-        Value: !Sub ${appName}-SubnetPrivateA
-
-  SubnetPrivateB:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: !Select [1, !GetAZs ]
-      CidrBlock: !Sub 10.0.${classCSubnetPrivateB}.0/24
-      VpcId: !Ref vpc
-      Tags:
-      - Key: Name
-        Value: !Sub ${appName}-SubnetPrivateB
-
-  RouteTableAssociationPublicA:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref SubnetPublicA
-      RouteTableId: !Ref routeTablePublic
-
   BastionSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -152,15 +104,6 @@ Resources:
         Value: !Sub ${appName}-RDSSG
 
 Outputs:
-  OutSubnetPrivateA:
-    Description: Subnet Private A
-    Value: !Ref SubnetPrivateA
-  OutSubnetPrivateB:
-    Description: Subnet Private B
-    Value: !Ref SubnetPrivateB
-  OutSubnetPublicA:
-    Description: Subnet Public A
-    Value: !Ref SubnetPublicA
   OutBastionSG:
     Description: Bastion security group
     Value: !Ref BastionSG
