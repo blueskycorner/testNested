@@ -71,6 +71,12 @@ Parameters:
   dbStorageType:
     Description: RDS storage type
     Type: String
+  preferredBackupWindow:
+    Description: RDS prefered backup window
+    Type: String
+  preferredMaintenanceWindow:
+    Description: RDS prefered maintenance window
+    Type: String
 
 Resources:
   bastion:
@@ -153,6 +159,8 @@ Resources:
       StorageType: !Ref dbStorageType
       VPCSecurityGroups: 
       - !Ref rdsSG
+      PreferredBackupWindow: !Ref preferredBackupWindow
+      PreferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
 Outputs:
   OutRdsEndpoint:

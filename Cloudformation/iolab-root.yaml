@@ -57,6 +57,14 @@ Parameters:
     Description: RDS storage type
     Type: String
     Default: gp2
+  preferredBackupWindow:
+    Description: RDS prefered backup window
+    Type: String
+    Default: 00:00-00:30
+  preferredMaintenanceWindow:
+    Description: RDS prefered maintenance window
+    Type: String
+    Default: Sun:00:30-Sun:01:00
 
 Resources:
   vpc:
@@ -100,6 +108,8 @@ Resources:
         dbMasterPassword: !Ref dbMasterPassword
         dbPort: !Ref dbPort
         dbStorageType: !Ref dbStorageType
+        preferredBackupWindow: !Ref preferredBackupWindow
+        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
   # Vicat:
   #   Type: AWS::CloudFormation::Stack
@@ -130,6 +140,8 @@ Resources:
   #       dbMasterPassword: !Ref dbMasterPassword
   #       dbPort: !Ref dbPort
   #       dbStorageType: !Ref dbStorageType
+  #      preferredBackupWindow: !Ref preferredBackupWindow
+  #      preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
   # Mutual:
   #   Type: AWS::CloudFormation::Stack
@@ -160,6 +172,8 @@ Resources:
   #       dbMasterPassword: !Ref dbMasterPassword
   #       dbPort: !Ref dbPort
   #       dbStorageType: !Ref dbStorageType
+  #       preferredBackupWindow: !Ref preferredBackupWindow
+  #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
 Outputs:
   # BOIRON OUTPUTS

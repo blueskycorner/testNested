@@ -74,6 +74,12 @@ Parameters:
   dbStorageType:
     Description: RDS storage type
     Type: String
+  preferredBackupWindow:
+    Description: RDS prefered backup window
+    Type: String
+  preferredMaintenanceWindow:
+    Description: RDS prefered maintenance window
+    Type: String
 
 Resources:
   appNetwork:
@@ -123,6 +129,8 @@ Resources:
         dbMasterPassword: !Ref dbMasterPassword
         dbPort: !Ref dbPort
         dbStorageType: !Ref dbStorageType
+        preferredBackupWindow: !Ref preferredBackupWindow
+        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
 Outputs:
   OutRdsEndpoint:
