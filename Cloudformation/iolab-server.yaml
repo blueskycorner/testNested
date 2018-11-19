@@ -86,6 +86,8 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${appName}-bastion
+      - Key: SCHEDULING
+        Value: Standard
 
   eipBastion:
     Type: AWS::EC2::EIP
@@ -106,6 +108,8 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${appName}-preprodQualif
+      - Key: SCHEDULING
+        Value: Standard
 
   prod:
     Type: AWS::EC2::Instance

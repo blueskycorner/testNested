@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IO Lab Server & RDS
+
+Parameters:
+  TemplateBucket:
+    Description: S3 bucket from which nested templates are fetched
+    Type: String
+
+Resources:
+  StartStopInstancesFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - ec2:StartInstances
+            - ec2:StopInstances
+            Resource: arn:aws:ec2:*:*:instance/*
+          - Effect: Allow
+            Action:
+            - ec2:DescribeInstances
+            Resource: "*"
+
+  StartScheduledInstancesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: StartScheduledInstances
+      Code:
+        S3Bucket: !Ref TemplateBucket
+        S3Key: lambda/StartScheduledInstances.zip
+      Handler: StartScheduledInstances.lambda_handler
+      Runtime: python3.6
+      Role: !GetAtt StartStopInstancesFunctionRole.Arn
+      Environment:
+        Variables:
+          SCHEDULING: Standard
+      MemorySize: 128
+      Timeout: 10
+      Description: Start instances when SCHEDULING = Standard
+
+  StartInstanceEvent: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Event to Start scheduled instances
+      ScheduleExpression: cron(0 07 ? * MON-FRI *)
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !GetAtt StartScheduledInstancesFunction.Arn
+          Id: "TargetStartScheduledInstancesFunction"
+
+  StopScheduledInstancesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: StopScheduledInstances
+      Code:
+        S3Bucket: !Ref TemplateBucket
+        S3Key: lambda/StopScheduledInstances.zip
+      Handler: StopScheduledInstances.lambda_handler
+      Runtime: python3.6
+      Role: !GetAtt StartStopInstancesFunctionRole.Arn
+      Environment:
+        Variables:
+          SCHEDULING: Standard
+      MemorySize: 128
+      Timeout: 10
+      Description: Stop instances when SCHEDULING = Standard
+
+  StopInstanceEvent: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Event to Stop scheduled instances
+      ScheduleExpression: cron(0 19 ? * MON-FRI *)
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !GetAtt StopScheduledInstancesFunction.Arn
+          Id: "TargetStopScheduledInstancesFunction"
