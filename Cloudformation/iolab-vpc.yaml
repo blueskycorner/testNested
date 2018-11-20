@@ -26,6 +26,21 @@ Resources:
     Properties:
       VpcId: !Ref vpc
       InternetGatewayId: !Ref InternetGateway
+
+  NatGatewayEIPA:
+    Type: AWS::EC2::EIP
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      Domain: vpc
+      
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIPA.AllocationId
+      SubnetId: !Ref SubnetPublicA
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-NatGatewayA
   
   RouteTablePublic:
     Type: AWS::EC2::RouteTable
@@ -42,6 +57,22 @@ Resources:
       RouteTableId: !Ref RouteTablePublic
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+      
+  RouteTablePrivate:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-RouteTablePrivate
+        
+  RouteTablePrivateInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
 
   SubnetPublicA:
     Type: AWS::EC2::Subnet
@@ -94,6 +125,18 @@ Resources:
     Properties:
       SubnetId: !Ref SubnetPublicB
       RouteTableId: !Ref RouteTablePublic
+
+  RouteTableAssociationPrivateA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPrivateA
+      RouteTableId: !Ref RouteTablePrivate
+  
+  RouteTableAssociationPrivateB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPrivateB
+      RouteTableId: !Ref RouteTablePrivate
 
   albSG:
     Type: AWS::EC2::SecurityGroup
