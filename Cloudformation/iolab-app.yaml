@@ -14,17 +14,8 @@ Parameters:
   albSG:
     Description: Application Load Balancer
     Type: String
-  bastionSourceIp:
-    Description: Cidr block allowed to access bastion
-    Type: String
   keypairName:
     Description: key pair name
-    Type: String
-  bastionInstanceType:
-    Description: bastion instance type
-    Type: String
-  bastionAmiId:
-    Description: bastion AMI id
     Type: String
   serverInstanceType:
     Description: server instance type
@@ -68,14 +59,14 @@ Parameters:
   preferredMaintenanceWindow:
     Description: RDS prefered maintenance window
     Type: String
-  bastionSubnetId:
-    Description: Bastion subnet Id
-    Type: String
   serverSubnetId:
     Description: Server subnet Id
     Type: String
   rdsSubnets:
     Description: RDS subnet Ids
+    Type: String
+  bastionSG:
+    Description: Bastion security group
     Type: String
 
 Resources:
@@ -87,8 +78,8 @@ Resources:
         appName: !Ref appName
         vpc: !Ref vpc
         albSG: !Ref albSG
-        dbPort: 3306
-        bastionSourceIp: !Ref bastionSourceIp
+        dbPort: !Ref dbPort
+        bastionSG: !Ref bastionSG
         
   appServer:
     Type: AWS::CloudFormation::Stack
@@ -97,12 +88,8 @@ Resources:
       Parameters:
         appName: !Ref appName
         keypairName: !Ref keypairName
-        bastionInstanceType: !Ref bastionInstanceType
-        bastionAmiId: !Ref bastionAmiId
         serverInstanceType: !Ref serverInstanceType
         serverAmiId: !Ref serverAmiId
-        bastionSubnetId: !Ref bastionSubnetId
-        bastionSG: !GetAtt appNetwork.Outputs.OutBastionSG
         serverSubnetId: !Ref serverSubnetId
         preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
         prodSG: !GetAtt appNetwork.Outputs.OutProdSG
@@ -125,10 +112,6 @@ Outputs:
   OutRdsEndpoint:
     Description: RDS Endpoint
     Value: !GetAtt appServer.Outputs.OutRdsEndpoint
-
-  OutEipBastion:
-    Description: Bastion IP
-    Value: !GetAtt appServer.Outputs.OutEipBastion
 
   OutPreproQualifIP:
     Description: Preprod & Qualif private IP

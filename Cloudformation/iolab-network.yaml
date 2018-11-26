@@ -14,28 +14,28 @@ Parameters:
   dbPort:
     Description: port for accessing data base
     Type: Number
-  bastionSourceIp:
-    Description: Cidr block allowed to access bastion
+  bastionSG:
+    Description: port for accessing data base
     Type: String
 
 Resources:
-  BastionSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: SecurityGroup for bastion
-      VpcId: !Ref vpc
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: !Ref dbPort
-        ToPort: !Ref dbPort
-        CidrIp: !Ref bastionSourceIp
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: !Ref bastionSourceIp
-      Tags:
-      - Key: Name
-        Value: !Sub ${appName}-BastionSG
+  # BastionSG:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: SecurityGroup for bastion
+  #     VpcId: !Ref vpc
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: !Ref dbPort
+  #       ToPort: !Ref dbPort
+  #       CidrIp: !Ref bastionSourceIp
+  #     - IpProtocol: tcp
+  #       FromPort: 22
+  #       ToPort: 22
+  #       CidrIp: !Ref bastionSourceIp
+  #     Tags:
+  #     - Key: Name
+  #       Value: !Sub ${appName}-BastionSG
 
   ProdSG:
     Type: AWS::EC2::SecurityGroup
@@ -54,7 +54,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22  # TO BE CONFIRMED
         ToPort: 22  # TO BE CONFIRMED
-        SourceSecurityGroupId: !Ref BastionSG
+        SourceSecurityGroupId: !Ref bastionSG
       Tags:
       - Key: Name
         Value: !Sub ${appName}-ProdSG
@@ -76,7 +76,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22  # TO BE CONFIRMED
         ToPort: 22  # TO BE CONFIRMED
-        SourceSecurityGroupId: !Ref BastionSG
+        SourceSecurityGroupId: !Ref bastionSG
       Tags:
       - Key: Name
         Value: !Sub ${appName}-PreprodQualifSG
@@ -90,7 +90,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: !Ref dbPort
         ToPort: !Ref dbPort
-        SourceSecurityGroupId: !Ref BastionSG
+        SourceSecurityGroupId: !Ref bastionSG
       - IpProtocol: tcp
         FromPort: !Ref dbPort
         ToPort: !Ref dbPort
@@ -104,9 +104,6 @@ Resources:
         Value: !Sub ${appName}-RDSSG
 
 Outputs:
-  OutBastionSG:
-    Description: Bastion security group
-    Value: !Ref BastionSG
   OutPreprodQualifSG:
     Description: Preproduction & Qualif security group
     Value: !Ref PreprodQualifSG

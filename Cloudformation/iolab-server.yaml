@@ -8,23 +8,11 @@ Parameters:
   keypairName:
     Description: bastion key pair name
     Type: String
-  bastionInstanceType:
-    Description: bastion instance type
-    Type: String
-  bastionAmiId:
-    Description: bastion AMI id
-    Type: String
   serverInstanceType:
     Description: server instance type
     Type: String
   serverAmiId:
     Description: server AMI id
-    Type: String
-  bastionSubnetId:
-    Description: bastion subnet id
-    Type: String
-  bastionSG:
-    Description: bastion security group
     Type: String
   serverSubnetId:
     Description: server subnet id
@@ -79,27 +67,25 @@ Parameters:
     Type: String
 
 Resources:
-  bastion:
-    Type: AWS::EC2::Instance
-    Properties:
-      KeyName: !Ref keypairName
-      ImageId: !Ref bastionAmiId
-      InstanceType: !Ref bastionInstanceType
-      Monitoring: false
-      SubnetId: !Ref bastionSubnetId
-      SecurityGroupIds:
-      - !Ref bastionSG
-      Tags:
-      - Key: Name
-        Value: !Sub ${appName}-bastion
-      - Key: SCHEDULING
-        Value: Standard
+  # bastion:
+  #   Type: AWS::EC2::Instance
+  #   Properties:
+  #     KeyName: !Ref keypairName
+  #     ImageId: !Ref bastionAmiId
+  #     InstanceType: !Ref bastionInstanceType
+  #     Monitoring: false
+  #     SubnetId: !Ref bastionSubnetId
+  #     SecurityGroupIds:
+  #     - !Ref bastionSG
+  #     Tags:
+  #     - Key: Name
+  #       Value: !Sub ${appName}-bastion
 
-  eipBastion:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-      InstanceId: !Ref bastion
+  # eipBastion:
+  #   Type: AWS::EC2::EIP
+  #   Properties:
+  #     Domain: vpc
+  #     InstanceId: !Ref bastion
 
   preprodQualif:
     Type: AWS::EC2::Instance
@@ -166,10 +152,6 @@ Outputs:
   OutRdsEndpoint:
     Description: RDS Endpoint
     Value: !GetAtt rds.Endpoint.Address
-
-  OutEipBastion:
-    Description: Bastion IP
-    Value: !Ref eipBastion
 
   OutPreproQualifIP:
     Description: Prod IP

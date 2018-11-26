@@ -5,6 +5,21 @@ Parameters:
   ProjectName:
     Description: project name
     Type: String
+  keypairName:
+    Description: bastion key pair name
+    Type: String
+  bastionInstanceType:
+    Description: bastion instance type
+    Type: String
+  bastionAmiId:
+    Description: bastion AMI id
+    Type: String
+  bastionSourceIp:
+    Description: Cidr block allowed to access bastion
+    Type: String
+  dbPort:
+    Description: RDS db port
+    Type: Number
 
 Resources:
   vpc:
@@ -157,6 +172,44 @@ Resources:
       - Key: Name
         Value: !Sub ${ProjectName}-ALBSG
 
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup for bastion
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        CidrIp: !Ref bastionSourceIp
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref bastionSourceIp
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-BastionSG
+
+  bastion:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref keypairName
+      ImageId: !Ref bastionAmiId
+      InstanceType: !Ref bastionInstanceType
+      Monitoring: false
+      SubnetId: !Ref SubnetPublicA
+      SecurityGroupIds:
+      - !Ref BastionSG
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-bastion
+
+  eipBastion:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref bastion
+
 Outputs:
   IOLABVPC:
     Description: IOLAB VPC
@@ -185,3 +238,11 @@ Outputs:
   OutSubnetPrivateB:
     Description: Subnet Private B
     Value: !Ref SubnetPrivateB
+
+  OutBastionSG:
+    Description: Bastion security group
+    Value: !Ref BastionSG
+
+  OutBastionEIP:
+    Description: Bastion IP
+    Value: !Ref eipBastion
