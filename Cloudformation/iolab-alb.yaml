@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IO Lab ALB
+
+Parameters:
+  ProjectName:
+    Description: project name
+    Type: String
+  albSG:
+    Description: Application Laod Balancer security group
+    Type: String
+  ALBSubnets:
+    Description: bastion instance type
+    Type: CommaDelimitedList
+  vpc:
+    Description: vpc
+    Type: String
+  iolabDomainName:
+    Description: Boiron domain name
+    Type: String
+    Default: iolab.fr
+  boironDomainName:
+    Description: Boiron domain name
+    Type: String
+    Default: boiron
+  iolabCertificate:
+    Description: IO-Lab certificate
+    Type: String
+    Default: arn:aws:acm:us-east-1:315777477680:certificate/3fe79bb2-ca50-4931-9c72-c6d67c9ab1ce
+
+Resources:
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Name: !Sub ${ProjectName}-ALB
+      SecurityGroups:
+        - !Ref albSG
+      Subnets: !Ref ALBSubnets
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-ALB
+
+  HTTPALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      DefaultActions:
+        -
+          Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Forbidden
+            StatusCode: 403
+      Port: 80
+      Protocol: HTTP
+  
+  BoironHTTPALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPALBListener
+      Priority: 1
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${boironDomainName}.${iolabDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref boironHTTPTarget
+
+  HTTPSALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      DefaultActions:
+        -
+          Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Forbidden
+            StatusCode: 403
+      Port: 443
+      Protocol: HTTPS
+      Certificates: 
+      - CertificateArn: !Ref iolabCertificate
+  
+  BoironHTTPSALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSALBListener
+      Priority: 1
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${boironDomainName}.${iolabDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref boironHTTPSTarget
+
+  boironHTTPTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 80
+      Protocol: HTTP
+      Name: !Sub ${ProjectName}-boironHTTPTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      # Targets:
+      #   AvailabilityZone: String
+      #   Id: String
+    DependsOn: ALB
+
+  boironHTTPSTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 443
+      Protocol: HTTPS
+      Name: !Sub ${ProjectName}-boironHTTPSTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTPS
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      # Targets:
+      #   AvailabilityZone: String
+      #   Id: String
+    DependsOn: ALB

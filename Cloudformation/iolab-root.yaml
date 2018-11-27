@@ -182,6 +182,20 @@ Resources:
   #       preferredBackupWindow: !Ref preferredBackupWindow
   #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
+  alb:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-alb.yaml
+      Parameters:
+        ProjectName: IOLAB
+        albSG: !GetAtt vpc.Outputs.ALBSG
+        ALBSubnets:  
+          Fn::Join:
+            - ','
+            - -  !GetAtt vpc.Outputs.OutSubnetPublicA
+              -  !GetAtt vpc.Outputs.OutSubnetPublicB
+        vpc: !GetAtt vpc.Outputs.IOLABVPC
+
 Outputs:
   # GLOBAL OUTPUTS
   EipBastion:
