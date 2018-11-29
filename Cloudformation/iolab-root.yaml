@@ -65,6 +65,10 @@ Parameters:
     Description: RDS prefered maintenance window
     Type: String
     Default: Sun:00:30-Sun:01:00
+  BucketName:
+    Description: Bucket name to store related files of the project
+    Type: String
+    Default: behlers-test1
 
 Resources:
   vpc:
@@ -182,19 +186,20 @@ Resources:
   #       preferredBackupWindow: !Ref preferredBackupWindow
   #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
-  alb:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-alb.yaml
-      Parameters:
-        ProjectName: IOLAB
-        albSG: !GetAtt vpc.Outputs.ALBSG
-        ALBSubnets:  
-          Fn::Join:
-            - ','
-            - -  !GetAtt vpc.Outputs.OutSubnetPublicA
-              -  !GetAtt vpc.Outputs.OutSubnetPublicB
-        vpc: !GetAtt vpc.Outputs.IOLABVPC
+  # global:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-global.yaml
+  #     Parameters:
+  #       ProjectName: IOLAB
+  #       albSG: !GetAtt vpc.Outputs.ALBSG
+  #       ALBSubnets:  
+  #         Fn::Join:
+  #           - ','
+  #           - -  !GetAtt vpc.Outputs.OutSubnetPublicA
+  #             -  !GetAtt vpc.Outputs.OutSubnetPublicB
+  #       vpc: !GetAtt vpc.Outputs.IOLABVPC
+  #       BucketName: !Ref BucketName
 
 Outputs:
   # GLOBAL OUTPUTS

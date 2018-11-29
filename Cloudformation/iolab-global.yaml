@@ -14,10 +14,13 @@ Parameters:
   vpc:
     Description: vpc
     Type: String
+  BucketName:
+    Description: Bucket name
+    Type: String
   iolabDomainName:
     Description: Boiron domain name
     Type: String
-    Default: iolab.fr
+    Default: cloud.hardisaws.com
   boironDomainName:
     Description: Boiron domain name
     Type: String
@@ -138,7 +141,62 @@ Resources:
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
       UnhealthyThresholdCount: 3
-      # Targets:
-      #   AvailabilityZone: String
-      #   Id: String
+      Targets:
+      - Id: i-00513634c46216980
     DependsOn: ALB
+
+  # bucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties: 
+  #     AccessControl: Private
+  #     BucketName: !Ref BucketName
+
+  # cloudfrontDistribution:
+  #   Type: AWS::CloudFront::Distribution
+  #   Properties:
+  #     DistributionConfig:
+  #       Origins:
+  #         - DomainName: !GetAtt ALB.DNSName
+  #           Id: albOrigin
+  #           CustomOriginConfig:
+  #             OriginProtocolPolicy: match-viewer
+  #       DefaultCacheBehavior: 
+  #         AllowedMethods:
+  #         - DELETE
+  #         - GET
+  #         - HEAD
+  #         - OPTIONS
+  #         - PATCH
+  #         - POST
+  #         - PUT
+  #         TargetOriginId: albOrigin
+  #         ForwardedValues:
+  #           QueryString: true
+  #           Cookies:
+  #             Forward: none
+  #         ViewerProtocolPolicy: redirect-to-https
+  #       DefaultRootObject: index.html
+  #       Enabled: true
+  #       Logging:
+  #         IncludeCookies: true
+  #         Bucket: !Sub ${BucketName}.s3.amazonaws.com
+  #         Prefix: CloudfrontLogs
+  #       ViewerCertificate:
+  #         AcmCertificateArn: !Ref iolabCertificate
+  #         SslSupportMethod: sni-only
+
+  # iolabHostedZone:
+  #   Type: AWS::Route53::HostedZone
+  #   Properties:
+  #     Name: !Sub ${vygonDomainName}
+
+  # boironRecordSet:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     Name: !Sub ${boironDomainName}.${iolabDomainName}.
+  #     Type: A
+  #     AliasTarget: 
+  #       DNSName: !GetAtt cloudfrontDistribution.DomainName
+  #       EvaluateTargetHealth: false
+  #       HostedZoneId: Z2FDTNDATAQYW2
+  #     HostedZoneId: Z8RQBL38LYV52 # To be replaced by hosted zone Id if created whitin the stack --> !Ref route53HostedZone
