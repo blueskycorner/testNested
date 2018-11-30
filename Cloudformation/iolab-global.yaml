@@ -66,12 +66,6 @@ Resources:
       Certificates: 
       - CertificateArn: !Ref iolabCertificate
 
-  # bucket:
-  #   Type: AWS::S3::Bucket
-  #   Properties: 
-  #     AccessControl: Private
-  #     BucketName: !Ref BucketName
-
   # cloudfrontDistribution:
   #   Type: AWS::CloudFront::Distribution
   #   Properties:

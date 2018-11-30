@@ -5,23 +5,29 @@ Parameters:
   TemplateBucket:
     Description: S3 bucket from which nested templates are fetched
     Type: String
-  KeyPairName:
+  ProjectName:
+    Description: Project name used for naming and tagging
+    Type: String
+  BastionKeyPairName:
     Description: EC2 key pair name
     Type: String
+    Default: app-migration-bastion
   bastionInstanceType:
     Description: Bastion instance type
     Type: String
+    Default: t2.micro
   bastionAmiId:
     Description: Bastion ami ID
     Type: String
-    Default: ami-059eeca93cf09eebd
+    Default: ami-0fad8cb11d5e5a502
   serverInstanceType:
     Description: Server instance type
     Type: String
+    Default: t3.medium
   serverAmiId:
     Description: Server ami ID
     Type: String
-    Default: ami-059eeca93cf09eebd
+    Default: ami-28fd4c55
   dbAllocatedStorage:
     Description: RDS allocated storage
     Type: Number
@@ -29,7 +35,7 @@ Parameters:
   dbInstanceClass:
     Description: RDS instance class
     Type: String
-    Default: db.t2.micro
+    Default: db.t2.medium
   dbBackupRetentionPeriod:
     Description: RDS backup retention period
     Type: Number
@@ -49,6 +55,7 @@ Parameters:
   dbMasterPassword:
     Description: RDS master password
     Type: String
+    Default: master1234
   dbPort:
     Description: RDS db port
     Type: Number
@@ -60,15 +67,15 @@ Parameters:
   preferredBackupWindow:
     Description: RDS prefered backup window
     Type: String
-    Default: 00:00-00:30
+    Default: 02:00-02:30
   preferredMaintenanceWindow:
     Description: RDS prefered maintenance window
     Type: String
-    Default: Sun:00:30-Sun:01:00
+    Default: Sun:02:30-Sun:03:00
   BucketName:
     Description: Bucket name to store related files of the project
     Type: String
-    Default: behlers-test1
+    Default: app-migration
   iolabDomainName:
     Description: IO-Lab domain name
     Type: String
@@ -80,70 +87,28 @@ Resources:
     Properties:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-vpc.yaml
       Parameters:
-        ProjectName: IOLAB
+        ProjectName: !Ref ProjectName
+        BucketName: !Ref BucketName
         bastionSourceIp: 0.0.0.0/0
-        keypairName: !Ref KeyPairName
+        keypairName: !Ref BastionKeyPairName
         bastionInstanceType: !Ref bastionInstanceType
         bastionAmiId: !Ref bastionAmiId
         dbPort: !Ref dbPort
 
-  global:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-global.yaml
-      Parameters:
-        ProjectName: IOLAB
-        albSG: !GetAtt vpc.Outputs.ALBSG
-        ALBSubnets:  
-          Fn::Join:
-            - ','
-            - -  !GetAtt vpc.Outputs.OutSubnetPublicA
-              -  !GetAtt vpc.Outputs.OutSubnetPublicB
-        vpc: !GetAtt vpc.Outputs.IOLABVPC
-        BucketName: !Ref BucketName
-
-  lambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-lambda.yaml
-      Parameters:
-        TemplateBucket: !Ref TemplateBucket
-
-  boiron:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
-      Parameters:
-        TemplateBucket: !Ref TemplateBucket
-        appName: boiron
-        vpc: !GetAtt vpc.Outputs.IOLABVPC
-        albSG: !GetAtt vpc.Outputs.ALBSG
-        keypairName: !Ref KeyPairName
-        serverInstanceType: !Ref serverInstanceType
-        serverAmiId: !Ref serverAmiId
-        dbAllocatedStorage: !Ref dbAllocatedStorage
-        dbInstanceClass: !Ref dbInstanceClass
-        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-        dbName: !Ref dbName
-        dbEngine: mysql
-        dbEngineVersion: 5.7.23
-        dbMasterUsername: !Ref dbMasterUsername
-        dbMasterPassword: !Ref dbMasterPassword
-        dbPort: !Ref dbPort
-        dbStorageType: !Ref dbStorageType
-        preferredBackupWindow: !Ref preferredBackupWindow
-        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
-        serverSubnetId: !GetAtt vpc.Outputs.OutSubnetPrivateA
-        rdsSubnets: 
-          Fn::Join:
-            - ','
-            - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
-              -  !GetAtt vpc.Outputs.OutSubnetPrivateB
-        bastionSG: !GetAtt vpc.Outputs.OutBastionSG
-        iolabDomainName: !Ref iolabDomainName
-        appDomainName:  boiron
-        HTTPALBListener: !GetAtt global.Outputs.OutHTTPALBListener
-        HTTPSALBListener: !GetAtt global.Outputs.OutHTTPSALBListener
+  # global:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-global.yaml
+  #     Parameters:
+  #       ProjectName: IOLAB
+  #       albSG: !GetAtt vpc.Outputs.ALBSG
+  #       ALBSubnets:  
+  #         Fn::Join:
+  #           - ','
+  #           - -  !GetAtt vpc.Outputs.OutSubnetPublicA
+  #             -  !GetAtt vpc.Outputs.OutSubnetPublicB
+  #       vpc: !GetAtt vpc.Outputs.IOLABVPC
+  #       BucketName: !Ref BucketName
 
   # Vicat:
   #   Type: AWS::CloudFormation::Stack
@@ -154,46 +119,7 @@ Resources:
   #       appName: vicat
   #       vpc: !GetAtt vpc.Outputs.IOLABVPC
   #       albSG: !GetAtt vpc.Outputs.ALBSG
-  #       routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
-  #       classCSubnetPrivateA: 4
-  #       classCSubnetPrivateB: 5
-  #       classCSubnetPublicA: 6
-  #       bastionSourceIp: 0.0.0.0/0
-  #       keypairName: !Ref KeyPairName
-  #       bastionInstanceType: !Ref bastionInstanceType
-  #       bastionAmiId: !Ref bastionAmiId
-  #       serverInstanceType: !Ref serverInstanceType
-  #       serverAmiId: !Ref serverAmiId
-  #       dbAllocatedStorage: !Ref dbAllocatedStorage
-  #       dbInstanceClass: !Ref dbInstanceClass
-  #       dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-  #       dbName: !Ref dbName
-  #       dbEngine: mysql
-  #       dbEngineVersion: 5.7.23
-  #       dbMasterUsername: !Ref dbMasterUsername
-  #       dbMasterPassword: !Ref dbMasterPassword
-  #       dbPort: !Ref dbPort
-  #       dbStorageType: !Ref dbStorageType
-  #      preferredBackupWindow: !Ref preferredBackupWindow
-  #      preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
-
-  # Mutual:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
-  #     Parameters:
-  #       TemplateBucket: !Ref TemplateBucket
-  #       appName: mutual
-  #       vpc: !GetAtt vpc.Outputs.IOLABVPC
-  #       albSG: !GetAtt vpc.Outputs.ALBSG
-  #       routeTablePublic: !GetAtt vpc.Outputs.IOLABRouteTablePublic
-  #       classCSubnetPrivateA: 8
-  #       classCSubnetPrivateB: 9
-  #       classCSubnetPublicA: 10
-  #       bastionSourceIp: 0.0.0.0/0
-  #       keypairName: !Ref KeyPairName
-  #       bastionInstanceType: !Ref bastionInstanceType
-  #       bastionAmiId: !Ref bastionAmiId
+  #       keypairName: !Ref BastionKeyPairName
   #       serverInstanceType: !Ref serverInstanceType
   #       serverAmiId: !Ref serverAmiId
   #       dbAllocatedStorage: !Ref dbAllocatedStorage
@@ -208,25 +134,23 @@ Resources:
   #       dbStorageType: !Ref dbStorageType
   #       preferredBackupWindow: !Ref preferredBackupWindow
   #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+  #       serverSubnetId: !GetAtt vpc.Outputs.OutSubnetPrivateA
+  #       rdsSubnets: 
+  #         Fn::Join:
+  #           - ','
+  #           - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
+  #             -  !GetAtt vpc.Outputs.OutSubnetPrivateB
+  #       bastionSG: !GetAtt vpc.Outputs.OutBastionSG
+  #       iolabDomainName: !Ref iolabDomainName
+  #       appDomainName:  boiron
+  #       HTTPALBListener: !GetAtt global.Outputs.OutHTTPALBListener
+  #       HTTPSALBListener: !GetAtt global.Outputs.OutHTTPSALBListener
 
 Outputs:
   # GLOBAL OUTPUTS
   EipBastion:
     Description: Bastion EIP
     Value: !GetAtt vpc.Outputs.OutBastionEIP
-
-  # BOIRON OUTPUTS
-  BoironRdsEndpoint:
-    Description: Boiron RDS Endpoint
-    Value: !GetAtt boiron.Outputs.OutRdsEndpoint
-
-  BoironPreproQualifIP:
-    Description: Boiron preprod & qualif private IP
-    Value: !GetAtt boiron.Outputs.OutPreproQualifIP
-
-  BoironProdIP:
-    Description: Boiron Prod private IP
-    Value: !GetAtt boiron.Outputs.OutProdIP
 
   # VICAT OUTPUTS
   # VicatRdsEndpoint:

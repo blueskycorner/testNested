@@ -152,15 +152,6 @@ Resources:
   #     Threshold: 1.0
   #     TreatMissingData: missing
 
-  # serversAlarmSNS:
-  #   Type: AWS::SNS::Topic
-  #   Properties: 
-  #     DisplayName: Boiron instance status check failed
-  #     Subscription:
-  #     - Endpoint: benjamin.ehlers@hardis.fr
-  #       Protocol: email
-  #     TopicName: BoironInstanceStatusCheckFailed
-
   RDSSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:

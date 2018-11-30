@@ -5,6 +5,9 @@ Parameters:
   ProjectName:
     Description: project name
     Type: String
+  BucketName:
+    Description: Bucket name for app migration
+    Type: String
   keypairName:
     Description: bastion key pair name
     Type: String
@@ -160,13 +163,13 @@ Resources:
       VpcId: !Ref vpc
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 443 # TO BE CONFIRMED
-        ToPort: 443 # TO BE CONFIRMED
+        FromPort: 443
+        ToPort: 443
         CidrIp: 0.0.0.0/0
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 80 # TO BE CONFIRMED
-        ToPort: 80 # TO BE CONFIRMED
+        FromPort: 80
+        ToPort: 80
         CidrIp: 0.0.0.0/0
       Tags:
       - Key: Name
@@ -209,6 +212,66 @@ Resources:
     Properties:
       Domain: vpc
       InstanceId: !Ref bastion
+
+  bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketName: !Ref BucketName
+
+  serversAlarmSNS:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: !Sub ${ProjectName} instance status check failed
+      Subscription:
+      - Endpoint: benjamin.ehlers@hardis.fr #aws@io-lab.fr
+        Protocol: email
+      TopicName: !Sub ${ProjectName}-InstanceStatusCheckFailed
+  
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Name: !Sub ${ProjectName}-ALB
+      SecurityGroups:
+        - !Ref albSG
+      Subnets:
+      - !Ref SubnetPublicA
+      - !Ref SubnetPublicB
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-ALB
+
+  HTTPALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      DefaultActions:
+        -
+          Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Forbidden
+            StatusCode: 403
+      Port: 80
+      Protocol: HTTP
+
+  # HTTPSALBListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     LoadBalancerArn: !Ref ALB
+  #     DefaultActions:
+  #       -
+  #         Type: fixed-response
+  #         FixedResponseConfig:
+  #           ContentType: text/plain
+  #           MessageBody: Forbidden
+  #           StatusCode: 403
+  #     Port: 443
+  #     Protocol: HTTPS
+  #     Certificates: 
+  #     - CertificateArn: !Ref iolabCertificate
 
 Outputs:
   IOLABVPC:
