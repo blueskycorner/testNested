@@ -77,15 +77,15 @@ Parameters:
   HTTPALBListener:
     Description: HTTP ALB listener
     Type: String
-  HTTPSALBListener:
-    Description: HTTPS ALB listener
-    Type: String
+  # HTTPSALBListener:
+  #   Description: HTTPS ALB listener
+  #   Type: String
 
 Resources:
   appNetwork:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-network.yaml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app-network.yaml
       Parameters:
         appName: !Ref appName
         vpc: !Ref vpc
@@ -93,49 +93,49 @@ Resources:
         dbPort: !Ref dbPort
         bastionSG: !Ref bastionSG
         
-  appServer:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-server.yaml
-      Parameters:
-        appName: !Ref appName
-        keypairName: !Ref keypairName
-        serverInstanceType: !Ref serverInstanceType
-        serverAmiId: !Ref serverAmiId
-        serverSubnetId: !Ref serverSubnetId
-        preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
-        prodSG: !GetAtt appNetwork.Outputs.OutProdSG
-        rdsSubnets: !Ref rdsSubnets
-        rdsSG: !GetAtt appNetwork.Outputs.OutRDSSG
-        dbAllocatedStorage: !Ref dbAllocatedStorage
-        dbInstanceClass: !Ref dbInstanceClass
-        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-        dbName: !Ref dbName
-        dbEngine: !Ref dbEngine
-        dbEngineVersion: !Ref dbEngineVersion
-        dbMasterUsername: !Ref dbMasterUsername
-        dbMasterPassword: !Ref dbMasterPassword
-        dbPort: !Ref dbPort
-        dbStorageType: !Ref dbStorageType
-        preferredBackupWindow: !Ref preferredBackupWindow
-        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
-        iolabDomainName: !Ref iolabDomainName
-        appDomainName:  !Ref appDomainName
-        vpc: !Ref vpc
-        HTTPALBListener: !Ref HTTPALBListener
-        HTTPSALBListener: !Ref HTTPSALBListener
+  # appServer:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-server.yaml
+  #     Parameters:
+  #       appName: !Ref appName
+  #       keypairName: !Ref keypairName
+  #       serverInstanceType: !Ref serverInstanceType
+  #       serverAmiId: !Ref serverAmiId
+  #       serverSubnetId: !Ref serverSubnetId
+  #       preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
+  #       prodSG: !GetAtt appNetwork.Outputs.OutProdSG
+  #       rdsSubnets: !Ref rdsSubnets
+  #       rdsSG: !GetAtt appNetwork.Outputs.OutRDSSG
+  #       dbAllocatedStorage: !Ref dbAllocatedStorage
+  #       dbInstanceClass: !Ref dbInstanceClass
+  #       dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+  #       dbName: !Ref dbName
+  #       dbEngine: !Ref dbEngine
+  #       dbEngineVersion: !Ref dbEngineVersion
+  #       dbMasterUsername: !Ref dbMasterUsername
+  #       dbMasterPassword: !Ref dbMasterPassword
+  #       dbPort: !Ref dbPort
+  #       dbStorageType: !Ref dbStorageType
+  #       preferredBackupWindow: !Ref preferredBackupWindow
+  #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+  #       iolabDomainName: !Ref iolabDomainName
+  #       appDomainName:  !Ref appDomainName
+  #       vpc: !Ref vpc
+  #       HTTPALBListener: !Ref HTTPALBListener
+  #       HTTPSALBListener: !Ref HTTPSALBListener
 
-Outputs:
-  OutRdsEndpoint:
-    Description: RDS Endpoint
-    Value: !GetAtt appServer.Outputs.OutRdsEndpoint
+# Outputs:
+#   OutRdsEndpoint:
+#     Description: RDS Endpoint
+#     Value: !GetAtt appServer.Outputs.OutRdsEndpoint
 
-  OutPreproQualifIP:
-    Description: Preprod & Qualif private IP
-    Value: !GetAtt appServer.Outputs.OutPreproQualifIP
+#   OutPreproQualifIP:
+#     Description: Preprod & Qualif private IP
+#     Value: !GetAtt appServer.Outputs.OutPreproQualifIP
 
-  OutProdIP:
-    Description: Prod private IP
-    Value: !GetAtt appServer.Outputs.OutProdIP
+#   OutProdIP:
+#     Description: Prod private IP
+#     Value: !GetAtt appServer.Outputs.OutProdIP
 
 

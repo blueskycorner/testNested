@@ -110,41 +110,41 @@ Resources:
   #       vpc: !GetAtt vpc.Outputs.IOLABVPC
   #       BucketName: !Ref BucketName
 
-  # Vicat:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
-  #     Parameters:
-  #       TemplateBucket: !Ref TemplateBucket
-  #       appName: vicat
-  #       vpc: !GetAtt vpc.Outputs.IOLABVPC
-  #       albSG: !GetAtt vpc.Outputs.ALBSG
-  #       keypairName: !Ref BastionKeyPairName
-  #       serverInstanceType: !Ref serverInstanceType
-  #       serverAmiId: !Ref serverAmiId
-  #       dbAllocatedStorage: !Ref dbAllocatedStorage
-  #       dbInstanceClass: !Ref dbInstanceClass
-  #       dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-  #       dbName: !Ref dbName
-  #       dbEngine: mysql
-  #       dbEngineVersion: 5.7.23
-  #       dbMasterUsername: !Ref dbMasterUsername
-  #       dbMasterPassword: !Ref dbMasterPassword
-  #       dbPort: !Ref dbPort
-  #       dbStorageType: !Ref dbStorageType
-  #       preferredBackupWindow: !Ref preferredBackupWindow
-  #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
-  #       serverSubnetId: !GetAtt vpc.Outputs.OutSubnetPrivateA
-  #       rdsSubnets: 
-  #         Fn::Join:
-  #           - ','
-  #           - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
-  #             -  !GetAtt vpc.Outputs.OutSubnetPrivateB
-  #       bastionSG: !GetAtt vpc.Outputs.OutBastionSG
-  #       iolabDomainName: !Ref iolabDomainName
-  #       appDomainName:  boiron
-  #       HTTPALBListener: !GetAtt global.Outputs.OutHTTPALBListener
-  #       HTTPSALBListener: !GetAtt global.Outputs.OutHTTPSALBListener
+  Vicat:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
+      Parameters:
+        TemplateBucket: !Ref TemplateBucket
+        appName: vicat
+        vpc: !GetAtt vpc.Outputs.IOLABVPC
+        albSG: !GetAtt vpc.Outputs.ALBSG
+        keypairName: !Ref BastionKeyPairName
+        serverInstanceType: !Ref serverInstanceType
+        serverAmiId: !Ref serverAmiId
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbName: !Ref dbName
+        dbEngine: mysql
+        dbEngineVersion: 5.7.23
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType
+        preferredBackupWindow: !Ref preferredBackupWindow
+        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+        serverSubnetId: !GetAtt vpc.Outputs.OutSubnetPrivateA
+        rdsSubnets: 
+          Fn::Join:
+            - ','
+            - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
+              -  !GetAtt vpc.Outputs.OutSubnetPrivateB
+        bastionSG: !GetAtt vpc.Outputs.OutBastionSG
+        iolabDomainName: !Ref iolabDomainName
+        appDomainName:  boiron
+        HTTPALBListener: !GetAtt vpc.Outputs.OutHTTPALBListener
+        # HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
 
 Outputs:
   # GLOBAL OUTPUTS

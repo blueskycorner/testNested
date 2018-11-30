@@ -309,3 +309,11 @@ Outputs:
   OutBastionEIP:
     Description: Bastion IP
     Value: !Ref eipBastion
+
+  OutHTTPALBListener:
+    Description: HTTP ALB Listener
+    Value: !Ref HTTPALBListener
+
+  # OutHTTPSALBListener:
+  #   Description: HTTPS ALB Listener
+  #   Value: !Ref HTTPSALBListener

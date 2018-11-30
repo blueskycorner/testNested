@@ -19,24 +19,6 @@ Parameters:
     Type: String
 
 Resources:
-  # BastionSG:
-  #   Type: AWS::EC2::SecurityGroup
-  #   Properties:
-  #     GroupDescription: SecurityGroup for bastion
-  #     VpcId: !Ref vpc
-  #     SecurityGroupIngress:
-  #     - IpProtocol: tcp
-  #       FromPort: !Ref dbPort
-  #       ToPort: !Ref dbPort
-  #       CidrIp: !Ref bastionSourceIp
-  #     - IpProtocol: tcp
-  #       FromPort: 22
-  #       ToPort: 22
-  #       CidrIp: !Ref bastionSourceIp
-  #     Tags:
-  #     - Key: Name
-  #       Value: !Sub ${appName}-BastionSG
-
   ProdSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -44,16 +26,16 @@ Resources:
       VpcId: !Ref vpc
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 443  # TO BE CONFIRMED
-        ToPort: 443  # TO BE CONFIRMED
+        FromPort: 443
+        ToPort: 443
         SourceSecurityGroupId: !Ref albSG
       - IpProtocol: tcp
-        FromPort: 80  # TO BE CONFIRMED
-        ToPort: 80  # TO BE CONFIRMED
+        FromPort: 80
+        ToPort: 80
         SourceSecurityGroupId: !Ref albSG
       - IpProtocol: tcp
-        FromPort: 22  # TO BE CONFIRMED
-        ToPort: 22  # TO BE CONFIRMED
+        FromPort: 22
+        ToPort: 22
         SourceSecurityGroupId: !Ref bastionSG
       Tags:
       - Key: Name
@@ -66,22 +48,40 @@ Resources:
       VpcId: !Ref vpc
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 443  # TO BE CONFIRMED
-        ToPort: 443  # TO BE CONFIRMED
-        SourceSecurityGroupId: !Ref albSG # TO BE CONFIRMED
+        FromPort: 443
+        ToPort: 443
+        SourceSecurityGroupId: !Ref albSG
       - IpProtocol: tcp
-        FromPort: 80  # TO BE CONFIRMED
-        ToPort: 80  # TO BE CONFIRMED
-        SourceSecurityGroupId: !Ref albSG # TO BE CONFIRMED
+        FromPort: 80
+        ToPort: 80
+        SourceSecurityGroupId: !Ref albSG
       - IpProtocol: tcp
-        FromPort: 22  # TO BE CONFIRMED
-        ToPort: 22  # TO BE CONFIRMED
+        FromPort: 22
+        ToPort: 22
         SourceSecurityGroupId: !Ref bastionSG
       Tags:
       - Key: Name
         Value: !Sub ${appName}-PreprodQualifSG
 
-  RDSSG:
+  RDSProdSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroup RDS
+      VpcId: !Ref vpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        SourceSecurityGroupId: !Ref bastionSG
+      - IpProtocol: tcp
+        FromPort: !Ref dbPort
+        ToPort: !Ref dbPort
+        SourceSecurityGroupId: !Ref ProdSG
+      Tags:
+      - Key: Name
+        Value: !Sub ${appName}-RDSProdSG
+
+  RDSDevPreProdSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: SecurityGroup RDS
@@ -95,13 +95,9 @@ Resources:
         FromPort: !Ref dbPort
         ToPort: !Ref dbPort
         SourceSecurityGroupId: !Ref PreprodQualifSG
-      - IpProtocol: tcp
-        FromPort: !Ref dbPort
-        ToPort: !Ref dbPort
-        SourceSecurityGroupId: !Ref ProdSG
       Tags:
       - Key: Name
-        Value: !Sub ${appName}-RDSSG
+        Value: !Sub ${appName}-RDSDevPreProdSG
 
 Outputs:
   OutPreprodQualifSG:
@@ -110,6 +106,9 @@ Outputs:
   OutProdSG:
     Description: Prod security group
     Value: !Ref ProdSG
-  OutRDSSG:
+  OutRDSProdSG:
     Description: Prod security group
-    Value: !Ref RDSSG
+    Value: !Ref RDSProdSG
+  OutRDSDevPreProdSG:
+    Description: Prod security group
+    Value: !Ref RDSDevPreProdSG
