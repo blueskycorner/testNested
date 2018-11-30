@@ -65,6 +65,21 @@ Parameters:
   preferredMaintenanceWindow:
     Description: RDS prefered maintenance window
     Type: String
+  iolabDomainName:
+    Description: Boiron domain name
+    Type: String
+  appDomainName:
+    Description: Boiron domain name
+    Type: String
+  vpc:
+    Description: VPC
+    Type: String
+  HTTPALBListener:
+    Description: HTTP ALB listener
+    Type: String
+  HTTPSALBListener:
+    Description: HTTPS ALB listener
+    Type: String
 
 Resources:
   # bastion:
@@ -176,6 +191,77 @@ Resources:
       - !Ref rdsSG
       PreferredBackupWindow: !Ref preferredBackupWindow
       PreferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+
+  HTTPALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPALBListener
+      Priority: 1
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${appDomainName}.${iolabDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref HTTPTarget
+  
+  HTTPSALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSALBListener
+      Priority: 1
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${appDomainName}.${iolabDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref HTTPSTarget
+
+  HTTPTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 80
+      Protocol: HTTP
+      Name: !Sub ${appName}-HTTPTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      # Targets:
+      #   AvailabilityZone: String
+      #   Id: String
+    # DependsOn: ALB
+
+  HTTPSTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 443
+      Protocol: HTTPS
+      Name: !Sub ${appName}-HTTPSTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTPS
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      # Targets:
+      # - Id: i-00513634c46216980
+    # DependsOn: ALB
 
 Outputs:
   OutRdsEndpoint:

@@ -68,6 +68,18 @@ Parameters:
   bastionSG:
     Description: Bastion security group
     Type: String
+  iolabDomainName:
+    Description: Boiron domain name
+    Type: String
+  appDomainName:
+    Description: Boiron domain name
+    Type: String
+  HTTPALBListener:
+    Description: HTTP ALB listener
+    Type: String
+  HTTPSALBListener:
+    Description: HTTPS ALB listener
+    Type: String
 
 Resources:
   appNetwork:
@@ -107,6 +119,11 @@ Resources:
         dbStorageType: !Ref dbStorageType
         preferredBackupWindow: !Ref preferredBackupWindow
         preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+        iolabDomainName: !Ref iolabDomainName
+        appDomainName:  !Ref appDomainName
+        vpc: !Ref vpc
+        HTTPALBListener: !Ref HTTPALBListener
+        HTTPSALBListener: !Ref HTTPSALBListener
 
 Outputs:
   OutRdsEndpoint:
