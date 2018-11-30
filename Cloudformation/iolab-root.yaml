@@ -85,7 +85,7 @@ Resources:
   vpc:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-vpc.yaml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-vpc-global.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         BucketName: !Ref BucketName
