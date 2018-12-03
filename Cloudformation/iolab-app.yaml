@@ -77,9 +77,9 @@ Parameters:
   HTTPALBListener:
     Description: HTTP ALB listener
     Type: String
-  # HTTPSALBListener:
-  #   Description: HTTPS ALB listener
-  #   Type: String
+  HTTPSALBListener:
+    Description: HTTPS ALB listener
+    Type: String
 
 Resources:
   appNetwork:
@@ -126,7 +126,7 @@ Resources:
         prodDomainName:  !Ref prodDomainName
         vpc: !Ref vpc
         HTTPALBListener: !Ref HTTPALBListener
-        # HTTPSALBListener: !Ref HTTPSALBListener
+        HTTPSALBListener: !Ref HTTPSALBListener
 
 Outputs:
   OutRdsDevPreprodEndpoint:

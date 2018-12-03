@@ -86,9 +86,9 @@ Parameters:
   HTTPALBListener:
     Description: HTTP ALB listener
     Type: String
-  # HTTPSALBListener:
-  #   Description: HTTPS ALB listener
-  #   Type: String
+  HTTPSALBListener:
+    Description: HTTPS ALB listener
+    Type: String
 
 Resources:
 
@@ -122,25 +122,26 @@ Resources:
       - Key: Name
         Value: !Sub ${appName}-prod
 
-  # serversAlarm:
-  #   Type: AWS::CloudWatch::Alarm
-  #   Properties:
-  #     ActionsEnabled: true
-  #     AlarmActions:
-  #       - !Ref serversAlarmSNS
-  #     AlarmDescription: Alarm when instance not responding
-  #     AlarmName: boironInstanceCheck
-  #     ComparisonOperator: GreaterThanOrEqualToThreshold
-  #     Dimensions:
-  #     - Name: InstanceId
-  #       Value: !Ref prod
-  #     EvaluationPeriods: 1
-  #     MetricName: StatusCheckFailed_Instance
-  #     Namespace: AWS/EC2
-  #     Period: 300
-  #     Statistic: SampleCount
-  #     Threshold: 1.0
-  #     TreatMissingData: missing
+  prodAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: prod
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref serversAlarmSNS
+      AlarmDescription: Alarm when instance not responding
+      AlarmName: !Sub ${appName}-ProdInstanceCheck
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref prod
+      EvaluationPeriods: 3
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Period: 60
+      Statistic: SampleCount
+      Threshold: 1.0
+      TreatMissingData: ignore
 
   RDSSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -192,6 +193,7 @@ Resources:
       PreferredBackupWindow: !Ref preferredBackupWindow
       PreferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
+  # Rules for HTTP
   DevPreprodHTTPALBRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -222,8 +224,10 @@ Resources:
           Type: forward
           TargetGroupArn: !Ref ProdHTTPTarget
 
+  # Targets for HTTP
   DevPreprodHTTPTarget:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: devPreprod
     Properties:
       VpcId: !Ref vpc
       TargetType: instance
@@ -243,6 +247,7 @@ Resources:
 
   ProdHTTPTarget:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: prod
     Properties:
       VpcId: !Ref vpc
       TargetType: instance
@@ -254,6 +259,78 @@ Resources:
       HealthCheckIntervalSeconds: 20
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Targets:
+      - Id: !Ref prod
+
+  # Rules for HTTPS
+  DevPreprodHTTPSALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSALBListener
+      Priority: 2
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${devPreprodDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref DevPreprodHTTPSTarget
+
+  ProdHTTPSALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSALBListener
+      Priority: 1
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${prodDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref ProdHTTPSTarget
+
+  # Targets for HTTPS
+  DevPreprodHTTPSTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: devPreprod
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 81 # TODO replace by 443
+      Protocol: HTTP # TODO replace by HTTPS
+      Name: !Sub ${appName}-DevPreprodHTTPSTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP # TODO replace by HTTPS
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Targets:
+      - Id: !Ref devPreprod
+
+  ProdHTTPSTarget:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: prod
+    Properties:
+      VpcId: !Ref vpc
+      TargetType: instance
+      Port: 81 # TODO replace by 443
+      Protocol: HTTP # TODO replace by HTTPS
+      Name: !Sub ${appName}-ProdHTTPSTarget
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP # TODO replace by HTTPS
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
       UnhealthyThresholdCount: 3

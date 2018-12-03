@@ -129,7 +129,7 @@ Resources:
         devPreprodDomainName: devpreprodvicat.iolab.fr # TODO: to be updated
         prodDomainName:  prod.vicat.fr # TODO: to be updated
         HTTPALBListener: !GetAtt vpc.Outputs.OutHTTPALBListener
-        # HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
+        HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
 
 Outputs:
   # GLOBAL OUTPUTS

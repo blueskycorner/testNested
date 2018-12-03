@@ -257,21 +257,21 @@ Resources:
       Port: 80
       Protocol: HTTP
 
-  # HTTPSALBListener:
-  #   Type: AWS::ElasticLoadBalancingV2::Listener
-  #   Properties:
-  #     LoadBalancerArn: !Ref ALB
-  #     DefaultActions:
-  #       -
-  #         Type: fixed-response
-  #         FixedResponseConfig:
-  #           ContentType: text/plain
-  #           MessageBody: Forbidden
-  #           StatusCode: 403
-  #     Port: 443
-  #     Protocol: HTTPS
-  #     Certificates: 
-  #     - CertificateArn: !Ref iolabCertificate
+  HTTPSALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      DefaultActions:
+        -
+          Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Forbidden
+            StatusCode: 403
+      Port: 81 # TODO replace by 443
+      Protocol: HTTP # TODO replace by HTTPS
+      # Certificates: 
+      # - CertificateArn: !Ref ??? TODO : Add all certificates here
 
 Outputs:
   IOLABVPC:
@@ -314,6 +314,6 @@ Outputs:
     Description: HTTP ALB Listener
     Value: !Ref HTTPALBListener
 
-  # OutHTTPSALBListener:
-  #   Description: HTTPS ALB Listener
-  #   Value: !Ref HTTPSALBListener
+  OutHTTPSALBListener:
+    Description: HTTPS ALB Listener
+    Value: !Ref HTTPSALBListener
