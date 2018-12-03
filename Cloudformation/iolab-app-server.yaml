@@ -89,6 +89,9 @@ Parameters:
   HTTPSALBListener:
     Description: HTTPS ALB listener
     Type: String
+  serversAlarmSNS:
+    Description: SNS Topic to send email
+    Type: String
 
 Resources:
 

@@ -130,6 +130,7 @@ Resources:
         prodDomainName:  prod.vicat.fr # TODO: to be updated
         HTTPALBListener: !GetAtt vpc.Outputs.OutHTTPALBListener
         HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
+        serversAlarmSNS: !GetAtt vpc.Outputs.OutServersAlarmSNS
 
 Outputs:
   # GLOBAL OUTPUTS

@@ -317,3 +317,7 @@ Outputs:
   OutHTTPSALBListener:
     Description: HTTPS ALB Listener
     Value: !Ref HTTPSALBListener
+
+  OutServersAlarmSNS:
+    Description: SNS Topic to send email
+    Value: !Ref serversAlarmSNS
