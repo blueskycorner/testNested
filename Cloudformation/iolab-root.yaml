@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: IO LAB Root stack
+Description: App Migration - Root stack
 
 Parameters:
   TemplateBucket:
@@ -19,7 +19,7 @@ Parameters:
   bastionAmiId:
     Description: Bastion ami ID
     Type: String
-    Default: ami-0fad8cb11d5e5a502
+    Default: ami-0fad8cb11d5e5a502 # amazon image with CLI (eu-west-3)
   serverInstanceType:
     Description: Server instance type
     Type: String
@@ -27,7 +27,7 @@ Parameters:
   serverAmiId:
     Description: Server ami ID
     Type: String
-    Default: ami-28fd4c55
+    Default: ami-075b44448d2276521 # Ubuntu 16.04 (eu-west-3)
   dbAllocatedStorage:
     Description: RDS allocated storage
     Type: Number
@@ -40,14 +40,14 @@ Parameters:
     Description: RDS backup retention period
     Type: Number
     Default: 7
-  dbName:
-    Description: RDS db name for the first DB
-    Type: String
-    Default: app
   dbEngine:
     Description: RDS db engine
     Type: String
     Default: mysql
+  dbEngineVersion:
+    Description: RDS db engine version
+    Type: String
+    Default: 5.7.23
   dbMasterUsername:
     Description: RDS master user name
     Type: String
@@ -89,28 +89,13 @@ Resources:
       Parameters:
         ProjectName: !Ref ProjectName
         BucketName: !Ref BucketName
-        bastionSourceIp: 0.0.0.0/0
-        keypairName: !Ref BastionKeyPairName
+        bastionSourceIp: 0.0.0.0/0 # TODO: 178.18.54.246
+        BastionKeyPairName: !Ref BastionKeyPairName
         bastionInstanceType: !Ref bastionInstanceType
         bastionAmiId: !Ref bastionAmiId
         dbPort: !Ref dbPort
 
-  # global:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-global.yaml
-  #     Parameters:
-  #       ProjectName: IOLAB
-  #       albSG: !GetAtt vpc.Outputs.ALBSG
-  #       ALBSubnets:  
-  #         Fn::Join:
-  #           - ','
-  #           - -  !GetAtt vpc.Outputs.OutSubnetPublicA
-  #             -  !GetAtt vpc.Outputs.OutSubnetPublicB
-  #       vpc: !GetAtt vpc.Outputs.IOLABVPC
-  #       BucketName: !Ref BucketName
-
-  Vicat:
+  vicat:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app.yaml
@@ -119,15 +104,15 @@ Resources:
         appName: vicat
         vpc: !GetAtt vpc.Outputs.IOLABVPC
         albSG: !GetAtt vpc.Outputs.ALBSG
-        keypairName: !Ref BastionKeyPairName
+        keypairNameDevPreprod: vicat-dev-preprod
+        keypairNameProd: vicat-prod
         serverInstanceType: !Ref serverInstanceType
         serverAmiId: !Ref serverAmiId
         dbAllocatedStorage: !Ref dbAllocatedStorage
         dbInstanceClass: !Ref dbInstanceClass
         dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-        dbName: !Ref dbName
-        dbEngine: mysql
-        dbEngineVersion: 5.7.23
+        dbEngine: !Ref dbEngine
+        dbEngineVersion: !Ref dbEngineVersion
         dbMasterUsername: !Ref dbMasterUsername
         dbMasterPassword: !Ref dbMasterPassword
         dbPort: !Ref dbPort
@@ -141,8 +126,8 @@ Resources:
             - -  !GetAtt vpc.Outputs.OutSubnetPrivateA
               -  !GetAtt vpc.Outputs.OutSubnetPrivateB
         bastionSG: !GetAtt vpc.Outputs.OutBastionSG
-        iolabDomainName: !Ref iolabDomainName
-        appDomainName:  boiron
+        devPreprodDomainName: devpreprodvicat.iolab.fr # TODO: to be updated
+        prodDomainName:  prod.vicat.fr # TODO: to be updated
         HTTPALBListener: !GetAtt vpc.Outputs.OutHTTPALBListener
         # HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
 
@@ -153,35 +138,18 @@ Outputs:
     Value: !GetAtt vpc.Outputs.OutBastionEIP
 
   # VICAT OUTPUTS
-  # VicatRdsEndpoint:
-  #   Description: Vicat RDS Endpoint
-  #   Value: !GetAtt Vicat.Outputs.OutRdsEndpoint
+  VicatRdsDevPreprodEndpoint:
+    Description: vicat RDS Dev & Preprod Endpoint
+    Value: !GetAtt vicat.Outputs.OutRdsDevPreprodEndpoint
 
-  # VicatEipBastion:
-  #   Description: Vicat Bastion IP
-  #   Value: !GetAtt Vicat.Outputs.OutEipBastion
+  VicatRdsProdEndpoint:
+    Description: vicat RDS prod Endpoint
+    Value: !GetAtt vicat.Outputs.OutRdsProdEndpoint
 
-  # VicatPreproQualifIP:
-  #   Description: Vicat preprod & qualif private IP
-  #   Value: !GetAtt Vicat.Outputs.OutPreproQualifIP
+  VicatDevPreprodQualifIP:
+    Description: vicat dev & preprod private IP
+    Value: !GetAtt vicat.Outputs.OutDevPreproIP
 
-  # VicatProdIP:
-  #   Description: Vicat Prod private IP
-  #   Value: !GetAtt Vicat.Outputs.OutProdIP
-
-  # MUTUAL OUTPUTS
-  # MutualRdsEndpoint:
-  #   Description: Mutual RDS Endpoint
-  #   Value: !GetAtt Mutual.Outputs.OutRdsEndpoint
-
-  # MutualEipBastion:
-  #   Description: Mutual Bastion IP
-  #   Value: !GetAtt Mutual.Outputs.OutEipBastion
-
-  # MutualPreproQualifIP:
-  #   Description: Mutual preprod & qualif private IP
-  #   Value: !GetAtt Mutual.Outputs.OutPreproQualifIP
-
-  # MutualProdIP:
-  #   Description: Mutual Prod private IP
-  #   Value: !GetAtt Mutual.Outputs.OutProdIP
+  VicatProdIP:
+    Description: vicat Prod private IP
+    Value: !GetAtt vicat.Outputs.OutProdIP

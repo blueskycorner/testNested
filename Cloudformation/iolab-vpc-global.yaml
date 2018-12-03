@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: IO Lab VPC
+Description: App Migration - VPC and global components
 
 Parameters:
   ProjectName:
@@ -8,7 +8,7 @@ Parameters:
   BucketName:
     Description: Bucket name for app migration
     Type: String
-  keypairName:
+  BastionKeyPairName:
     Description: bastion key pair name
     Type: String
   bastionInstanceType:
@@ -196,7 +196,7 @@ Resources:
   bastion:
     Type: AWS::EC2::Instance
     Properties:
-      KeyName: !Ref keypairName
+      KeyName: !Ref BastionKeyPairName
       ImageId: !Ref bastionAmiId
       InstanceType: !Ref bastionInstanceType
       Monitoring: false

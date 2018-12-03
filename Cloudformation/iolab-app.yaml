@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: IO Lab App
+Description: App Migration - App
 
 Parameters:
   TemplateBucket:
@@ -14,8 +14,11 @@ Parameters:
   albSG:
     Description: Application Load Balancer
     Type: String
-  keypairName:
-    Description: key pair name
+  keypairNameDevPreprod:
+    Description: Dev & Preprod key pair name
+    Type: String
+  keypairNameProd:
+    Description: Prod key pair name
     Type: String
   serverInstanceType:
     Description: server instance type
@@ -32,9 +35,6 @@ Parameters:
   dbBackupRetentionPeriod:
     Description: RDS backup retention period
     Type: Number
-  dbName:
-    Description: RDS db name for the first DB
-    Type: String
   dbEngine:
     Description: RDS db engine
     Type: String
@@ -68,10 +68,10 @@ Parameters:
   bastionSG:
     Description: Bastion security group
     Type: String
-  iolabDomainName:
+  devPreprodDomainName:
     Description: Boiron domain name
     Type: String
-  appDomainName:
+  prodDomainName:
     Description: Boiron domain name
     Type: String
   HTTPALBListener:
@@ -93,49 +93,56 @@ Resources:
         dbPort: !Ref dbPort
         bastionSG: !Ref bastionSG
         
-  # appServer:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-server.yaml
-  #     Parameters:
-  #       appName: !Ref appName
-  #       keypairName: !Ref keypairName
-  #       serverInstanceType: !Ref serverInstanceType
-  #       serverAmiId: !Ref serverAmiId
-  #       serverSubnetId: !Ref serverSubnetId
-  #       preprodQualifSG: !GetAtt appNetwork.Outputs.OutPreprodQualifSG
-  #       prodSG: !GetAtt appNetwork.Outputs.OutProdSG
-  #       rdsSubnets: !Ref rdsSubnets
-  #       rdsSG: !GetAtt appNetwork.Outputs.OutRDSSG
-  #       dbAllocatedStorage: !Ref dbAllocatedStorage
-  #       dbInstanceClass: !Ref dbInstanceClass
-  #       dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-  #       dbName: !Ref dbName
-  #       dbEngine: !Ref dbEngine
-  #       dbEngineVersion: !Ref dbEngineVersion
-  #       dbMasterUsername: !Ref dbMasterUsername
-  #       dbMasterPassword: !Ref dbMasterPassword
-  #       dbPort: !Ref dbPort
-  #       dbStorageType: !Ref dbStorageType
-  #       preferredBackupWindow: !Ref preferredBackupWindow
-  #       preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
-  #       iolabDomainName: !Ref iolabDomainName
-  #       appDomainName:  !Ref appDomainName
-  #       vpc: !Ref vpc
-  #       HTTPALBListener: !Ref HTTPALBListener
-  #       HTTPSALBListener: !Ref HTTPSALBListener
+  appServer:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/stack/iolab-app-server.yaml
+      Parameters:
+        appName: !Ref appName
+        keypairNameDevPreprod: !Ref keypairNameDevPreprod
+        keypairNameProd: !Ref keypairNameProd
+        serverInstanceType: !Ref serverInstanceType
+        serverAmiId: !Ref serverAmiId
+        serverSubnetId: !Ref serverSubnetId
+        devPreprodSG: !GetAtt appNetwork.Outputs.OutDevPreprodSG
+        prodSG: !GetAtt appNetwork.Outputs.OutProdSG
+        rdsSubnets: !Ref rdsSubnets
+        rdsDevPreProdSG: !GetAtt appNetwork.Outputs.OutRDSDevPreProdSG
+        rdsProdSG: !GetAtt appNetwork.Outputs.OutRDSProdSG
+        dbAllocatedStorage: !Ref dbAllocatedStorage
+        dbInstanceClass: !Ref dbInstanceClass
+        dbBackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+        dbNamePreprod: !Sub ${appName}preprod
+        dbNameProd: !Sub ${appName}prod
+        dbEngine: !Ref dbEngine
+        dbEngineVersion: !Ref dbEngineVersion
+        dbMasterUsername: !Ref dbMasterUsername
+        dbMasterPassword: !Ref dbMasterPassword
+        dbPort: !Ref dbPort
+        dbStorageType: !Ref dbStorageType
+        preferredBackupWindow: !Ref preferredBackupWindow
+        preferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+        devPreprodDomainName: !Ref devPreprodDomainName
+        prodDomainName:  !Ref prodDomainName
+        vpc: !Ref vpc
+        HTTPALBListener: !Ref HTTPALBListener
+        # HTTPSALBListener: !Ref HTTPSALBListener
 
-# Outputs:
-#   OutRdsEndpoint:
-#     Description: RDS Endpoint
-#     Value: !GetAtt appServer.Outputs.OutRdsEndpoint
+Outputs:
+  OutRdsDevPreprodEndpoint:
+    Description: RDS Dev & Preprod Endpoint
+    Value: !GetAtt appServer.Outputs.OutRdsDevPreprodEndpoint
 
-#   OutPreproQualifIP:
-#     Description: Preprod & Qualif private IP
-#     Value: !GetAtt appServer.Outputs.OutPreproQualifIP
+  OutRdsProdEndpoint:
+    Description: RDS Dev & Preprod Endpoint
+    Value: !GetAtt appServer.Outputs.OutRdsProdEndpoint
 
-#   OutProdIP:
-#     Description: Prod private IP
-#     Value: !GetAtt appServer.Outputs.OutProdIP
+  OutDevPreproIP:
+    Description: Dev &Preprod private IP
+    Value: !GetAtt appServer.Outputs.OutDevPreproIP
+
+  OutProdIP:
+    Description: Prod private IP
+    Value: !GetAtt appServer.Outputs.OutProdIP
 
 

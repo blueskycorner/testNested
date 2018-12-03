@@ -1,12 +1,15 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: IO Lab Server & RDS
+Description: App Migration - Server & RDS & ALB Rules
 
 Parameters:
   appName:
     Description: Application Name
     Type: String
-  keypairName:
-    Description: bastion key pair name
+  keypairNameDevPreprod:
+    Description: Dev & Preprod key pair name
+    Type: String
+  keypairNameProd:
+    Description: Prod key pair name
     Type: String
   serverInstanceType:
     Description: server instance type
@@ -17,8 +20,8 @@ Parameters:
   serverSubnetId:
     Description: server subnet id
     Type: String
-  preprodQualifSG:
-    Description: Preprod & Qualif security group
+  devPreprodSG:
+    Description: Dev & Preprod security group
     Type: String
   prodSG:
     Description: Prod security group
@@ -26,7 +29,10 @@ Parameters:
   rdsSubnets:
     Description: RDS Subnets
     Type: CommaDelimitedList
-  rdsSG:
+  rdsDevPreProdSG:
+    Description: RDS Dev & Preprod security group
+    Type: String
+  rdsProdSG:
     Description: RDS security group
     Type: String
   dbAllocatedStorage:
@@ -38,8 +44,11 @@ Parameters:
   dbBackupRetentionPeriod:
     Description: RDS backup retention period
     Type: Number
-  dbName:
-    Description: RDS db name for the first DB
+  dbNamePreprod:
+    Description: RDS db name for the preprod DB
+    Type: String
+  dbNameProd:
+    Description: RDS db name for the prod DB
     Type: String
   dbEngine:
     Description: RDS db engine
@@ -65,10 +74,10 @@ Parameters:
   preferredMaintenanceWindow:
     Description: RDS prefered maintenance window
     Type: String
-  iolabDomainName:
+  devPreprodDomainName:
     Description: Boiron domain name
     Type: String
-  appDomainName:
+  prodDomainName:
     Description: Boiron domain name
     Type: String
   vpc:
@@ -77,51 +86,32 @@ Parameters:
   HTTPALBListener:
     Description: HTTP ALB listener
     Type: String
-  HTTPSALBListener:
-    Description: HTTPS ALB listener
-    Type: String
+  # HTTPSALBListener:
+  #   Description: HTTPS ALB listener
+  #   Type: String
 
 Resources:
-  # bastion:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     KeyName: !Ref keypairName
-  #     ImageId: !Ref bastionAmiId
-  #     InstanceType: !Ref bastionInstanceType
-  #     Monitoring: false
-  #     SubnetId: !Ref bastionSubnetId
-  #     SecurityGroupIds:
-  #     - !Ref bastionSG
-  #     Tags:
-  #     - Key: Name
-  #       Value: !Sub ${appName}-bastion
 
-  # eipBastion:
-  #   Type: AWS::EC2::EIP
-  #   Properties:
-  #     Domain: vpc
-  #     InstanceId: !Ref bastion
-
-  preprodQualif:
+  devPreprod:
     Type: AWS::EC2::Instance
     Properties:
-      KeyName: !Ref keypairName
+      KeyName: !Ref keypairNameDevPreprod
       ImageId: !Ref serverAmiId
       InstanceType: !Ref serverInstanceType
       Monitoring: false
       SubnetId: !Ref serverSubnetId
       SecurityGroupIds:
-      - !Ref preprodQualifSG
+      - !Ref devPreprodSG
       Tags:
       - Key: Name
-        Value: !Sub ${appName}-preprodQualif
+        Value: !Sub ${appName}-devPreprod
       - Key: SCHEDULING
         Value: Standard
 
   prod:
     Type: AWS::EC2::Instance
     Properties:
-      KeyName: !Ref keypairName
+      KeyName: !Ref keypairNameProd
       ImageId: !Ref serverAmiId
       InstanceType: !Ref serverInstanceType
       Monitoring: false
@@ -157,17 +147,14 @@ Resources:
     Properties:
       DBSubnetGroupDescription: RDS Subnet Group
       SubnetIds: !Ref rdsSubnets
-      # SubnetIds:
-      # - subnet-02afb78c27a119988
-      # - subnet-0392ef04f8f6f7173
 
-  rds:
+  rdsDevPreprod:
     Type: AWS::RDS::DBInstance
     Properties:
       AllocatedStorage: !Ref dbAllocatedStorage
       DBInstanceClass: !Ref dbInstanceClass
       BackupRetentionPeriod: !Ref dbBackupRetentionPeriod
-      DBName: !Ref dbName
+      DBName: !Ref dbNamePreprod
       DBSubnetGroupName: !Ref RDSSubnetGroup
       Engine: !Ref dbEngine
       EngineVersion: !Ref dbEngineVersion
@@ -179,11 +166,48 @@ Resources:
       StorageEncrypted: false
       StorageType: !Ref dbStorageType
       VPCSecurityGroups: 
-      - !Ref rdsSG
+      - !Ref rdsDevPreProdSG
       PreferredBackupWindow: !Ref preferredBackupWindow
       PreferredMaintenanceWindow: !Ref preferredMaintenanceWindow
 
-  HTTPALBRule:
+  rdsProd:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref dbAllocatedStorage
+      DBInstanceClass: !Ref dbInstanceClass
+      BackupRetentionPeriod: !Ref dbBackupRetentionPeriod
+      DBName: !Ref dbNameProd
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      Engine: !Ref dbEngine
+      EngineVersion: !Ref dbEngineVersion
+      MasterUsername: !Ref dbMasterUsername
+      MasterUserPassword: !Ref dbMasterPassword
+      MultiAZ: false
+      Port: !Ref dbPort
+      PubliclyAccessible: false
+      StorageEncrypted: false
+      StorageType: !Ref dbStorageType
+      VPCSecurityGroups: 
+      - !Ref rdsProdSG
+      PreferredBackupWindow: !Ref preferredBackupWindow
+      PreferredMaintenanceWindow: !Ref preferredMaintenanceWindow
+
+  DevPreprodHTTPALBRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPALBListener
+      Priority: 2
+      Conditions:
+        -
+          Field: host-header
+          Values: 
+          - !Sub ${devPreprodDomainName}
+      Actions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref DevPreprodHTTPTarget
+
+  ProdHTTPALBRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref HTTPALBListener
@@ -192,35 +216,20 @@ Resources:
         -
           Field: host-header
           Values: 
-          - !Sub ${appDomainName}.${iolabDomainName}
+          - !Sub ${prodDomainName}
       Actions:
         -
           Type: forward
-          TargetGroupArn: !Ref HTTPTarget
-  
-  HTTPSALBRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      ListenerArn: !Ref HTTPSALBListener
-      Priority: 1
-      Conditions:
-        -
-          Field: host-header
-          Values: 
-          - !Sub ${appDomainName}.${iolabDomainName}
-      Actions:
-        -
-          Type: forward
-          TargetGroupArn: !Ref HTTPSTarget
+          TargetGroupArn: !Ref ProdHTTPTarget
 
-  HTTPTarget:
+  DevPreprodHTTPTarget:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref vpc
       TargetType: instance
       Port: 80
       Protocol: HTTP
-      Name: !Sub ${appName}-HTTPTarget
+      Name: !Sub ${appName}-DevPreprodHTTPTarget
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 20
@@ -229,39 +238,40 @@ Resources:
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
       UnhealthyThresholdCount: 3
-      # Targets:
-      #   AvailabilityZone: String
-      #   Id: String
-    # DependsOn: ALB
+      Targets:
+      - Id: !Ref devPreprod
 
-  HTTPSTarget:
+  ProdHTTPTarget:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref vpc
       TargetType: instance
-      Port: 443
-      Protocol: HTTPS
-      Name: !Sub ${appName}-HTTPSTarget
+      Port: 80
+      Protocol: HTTP
+      Name: !Sub ${appName}-ProdHTTPTarget
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 20
       HealthCheckPath: /
-      HealthCheckProtocol: HTTPS
+      HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
       UnhealthyThresholdCount: 3
-      # Targets:
-      # - Id: i-00513634c46216980
-    # DependsOn: ALB
+      Targets:
+      - Id: !Ref prod
 
 Outputs:
-  OutRdsEndpoint:
-    Description: RDS Endpoint
-    Value: !GetAtt rds.Endpoint.Address
+  OutRdsDevPreprodEndpoint:
+    Description: RDS Dev & Preprod Endpoint
+    Value: !GetAtt rdsDevPreprod.Endpoint.Address
 
-  OutPreproQualifIP:
+  OutRdsProdEndpoint:
+    Description: RDS Prod Endpoint
+    Value: !GetAtt rdsProd.Endpoint.Address
+
+  OutDevPreproIP:
     Description: Prod IP
-    Value: !GetAtt preprodQualif.PrivateIp
+    Value: !GetAtt devPreprod.PrivateIp
 
   OutProdIP:
     Description: Prod IP

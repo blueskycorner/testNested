@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: IO Lab Network & Security group
+Description: App Migration - app Network & Security group
 
 Parameters:
   appName:
@@ -41,10 +41,10 @@ Resources:
       - Key: Name
         Value: !Sub ${appName}-ProdSG
 
-  PreprodQualifSG:
+  DevPreprodSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: SecurityGroup for pre-production & Qualif
+      GroupDescription: SecurityGroup for dev & pre-production
       VpcId: !Ref vpc
       SecurityGroupIngress:
       - IpProtocol: tcp
@@ -61,7 +61,7 @@ Resources:
         SourceSecurityGroupId: !Ref bastionSG
       Tags:
       - Key: Name
-        Value: !Sub ${appName}-PreprodQualifSG
+        Value: !Sub ${appName}-DevPreprodSG
 
   RDSProdSG:
     Type: AWS::EC2::SecurityGroup
@@ -94,15 +94,15 @@ Resources:
       - IpProtocol: tcp
         FromPort: !Ref dbPort
         ToPort: !Ref dbPort
-        SourceSecurityGroupId: !Ref PreprodQualifSG
+        SourceSecurityGroupId: !Ref DevPreprodSG
       Tags:
       - Key: Name
         Value: !Sub ${appName}-RDSDevPreProdSG
 
 Outputs:
-  OutPreprodQualifSG:
-    Description: Preproduction & Qualif security group
-    Value: !Ref PreprodQualifSG
+  OutDevPreprodSG:
+    Description: Dev & Preproduction security group
+    Value: !Ref DevPreprodSG
   OutProdSG:
     Description: Prod security group
     Value: !Ref ProdSG
