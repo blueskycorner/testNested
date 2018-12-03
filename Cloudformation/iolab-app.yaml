@@ -83,6 +83,12 @@ Parameters:
   serversAlarmSNS:
     Description: SNS Topic to send email
     Type: String
+  albDnsName:
+    Description: Application DNS Name
+    Type: String
+  BucketName:
+    Description: Bucket name to store related files of the project
+    Type: String
 
 Resources:
   appNetwork:
@@ -120,7 +126,8 @@ Resources:
         dbEngine: !Ref dbEngine
         dbEngineVersion: !Ref dbEngineVersion
         dbMasterUsername: !Ref dbMasterUsername
-        dbMasterPassword: !Ref dbMasterPassword
+        rdsDevPreprodMasterUserPasswordParameter: !Sub ${appName}-rdsDevPreprodMasterUserPassword
+        rdsProdMasterUserPasswordParameter: !Sub ${appName}-rdsProdMasterUserPassword
         dbPort: !Ref dbPort
         dbStorageType: !Ref dbStorageType
         preferredBackupWindow: !Ref preferredBackupWindow
@@ -131,6 +138,8 @@ Resources:
         HTTPALBListener: !Ref HTTPALBListener
         HTTPSALBListener: !Ref HTTPSALBListener
         serversAlarmSNS: !Ref serversAlarmSNS
+        albDnsName: !Ref albDnsName
+        BucketName: !Ref BucketName
 
 Outputs:
   OutRdsDevPreprodEndpoint:
@@ -148,5 +157,9 @@ Outputs:
   OutProdIP:
     Description: Prod private IP
     Value: !GetAtt appServer.Outputs.OutProdIP
+
+  OutCloudfrontDistribution:
+    Description: CloudFrontDistribution Domain Name
+    Value: !GetAtt appServer.Outputs.OutCloudfrontDistribution
 
 

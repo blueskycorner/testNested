@@ -23,8 +23,8 @@ usage()
 upload()
 {
     aws s3 cp ./Cloudformation s3://${TEMPLATE_BUCKET}/stack --recursive  --exclude "iolab-root.yaml" --include "*.yaml" --profile ${AWS_PROFILE}
-    aws s3 cp ./StartScheduledInstances.zip s3://${TEMPLATE_BUCKET}/lambda/StartScheduledInstances.zip --profile ${AWS_PROFILE}
-    aws s3 cp ./StopScheduledInstances.zip s3://${TEMPLATE_BUCKET}/lambda/StopScheduledInstances.zip --profile ${AWS_PROFILE}
+    # aws s3 cp ./StartScheduledInstances.zip s3://${TEMPLATE_BUCKET}/lambda/StartScheduledInstances.zip --profile ${AWS_PROFILE}
+    # aws s3 cp ./StopScheduledInstances.zip s3://${TEMPLATE_BUCKET}/lambda/StopScheduledInstances.zip --profile ${AWS_PROFILE}
 }
 
 create_bucket()

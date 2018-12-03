@@ -59,8 +59,11 @@ Parameters:
   dbMasterUsername:
     Description: RDS master user name
     Type: String
-  dbMasterPassword:
-    Description: RDS master password
+  rdsDevPreprodMasterUserPasswordParameter:
+    Description: RDS master password parameter for preprod
+    Type: String
+  rdsProdMasterUserPasswordParameter:
+    Description: RDS master password parameter for prod
     Type: String
   dbPort:
     Description: RDS db port
@@ -91,6 +94,12 @@ Parameters:
     Type: String
   serversAlarmSNS:
     Description: SNS Topic to send email
+    Type: String
+  albDnsName:
+    Description: Application DNS Name
+    Type: String
+  BucketName:
+    Description: Bucket name for cloudfront
     Type: String
 
 Resources:
@@ -144,7 +153,7 @@ Resources:
       Period: 60
       Statistic: SampleCount
       Threshold: 1.0
-      TreatMissingData: ignore
+      TreatMissingData: notBreaching
 
   RDSSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -163,7 +172,11 @@ Resources:
       Engine: !Ref dbEngine
       EngineVersion: !Ref dbEngineVersion
       MasterUsername: !Ref dbMasterUsername
-      MasterUserPassword: !Ref dbMasterPassword
+      MasterUserPassword: !Join
+      - ''
+      - - "{{resolve:ssm-secure:"
+        - !Ref rdsDevPreprodMasterUserPasswordParameter
+        - ":1}}"
       MultiAZ: false
       Port: !Ref dbPort
       PubliclyAccessible: false
@@ -185,7 +198,11 @@ Resources:
       Engine: !Ref dbEngine
       EngineVersion: !Ref dbEngineVersion
       MasterUsername: !Ref dbMasterUsername
-      MasterUserPassword: !Ref dbMasterPassword
+      MasterUserPassword: !Join
+      - ''
+      - - "{{resolve:ssm-secure:"
+        - !Ref rdsProdMasterUserPasswordParameter
+        - ":1}}"
       MultiAZ: false
       Port: !Ref dbPort
       PubliclyAccessible: false
@@ -340,6 +357,39 @@ Resources:
       Targets:
       - Id: !Ref prod
 
+  cloudfrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Ref albDnsName
+            Id: albOrigin
+            CustomOriginConfig:
+              OriginProtocolPolicy: match-viewer
+        DefaultCacheBehavior: 
+          AllowedMethods:
+          - DELETE
+          - GET
+          - HEAD
+          - OPTIONS
+          - PATCH
+          - POST
+          - PUT
+          TargetOriginId: albOrigin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        Enabled: true
+        Logging:
+          IncludeCookies: true
+          Bucket: !Sub ${BucketName}.s3.amazonaws.com
+          Prefix: !Sub ${appName}-CloudfrontLogs
+        # ViewerCertificate:
+        #   AcmCertificateArn: !Ref iolabCertificate
+        #   SslSupportMethod: sni-only
+
 Outputs:
   OutRdsDevPreprodEndpoint:
     Description: RDS Dev & Preprod Endpoint
@@ -356,3 +406,7 @@ Outputs:
   OutProdIP:
     Description: Prod IP
     Value: !GetAtt prod.PrivateIp
+
+  OutCloudfrontDistribution:
+    Description: CloudFrontDistribution Domain Name
+    Value: !GetAtt cloudfrontDistribution.DomainName

@@ -131,6 +131,8 @@ Resources:
         HTTPALBListener: !GetAtt vpc.Outputs.OutHTTPALBListener
         HTTPSALBListener: !GetAtt vpc.Outputs.OutHTTPSALBListener
         serversAlarmSNS: !GetAtt vpc.Outputs.OutServersAlarmSNS
+        albDnsName: vpc.Outputs.OutAlbDnsName
+        BucketName: !Ref BucketName
 
 Outputs:
   # GLOBAL OUTPUTS
@@ -147,10 +149,14 @@ Outputs:
     Description: vicat RDS prod Endpoint
     Value: !GetAtt vicat.Outputs.OutRdsProdEndpoint
 
-  VicatDevPreprodQualifIP:
+  VicatDevPreprodIP:
     Description: vicat dev & preprod private IP
     Value: !GetAtt vicat.Outputs.OutDevPreproIP
 
   VicatProdIP:
     Description: vicat Prod private IP
     Value: !GetAtt vicat.Outputs.OutProdIP
+
+  VicatCloudfrontDistribution:
+    Description: Vicat CloudFrontDistribution Domain Name
+    Value: !GetAtt vicat.Outputs.OutCloudfrontDistribution

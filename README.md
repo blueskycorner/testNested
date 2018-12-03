@@ -1,1 +1,1 @@
-# Repository for IoLab stacks and VM installation
+# Repository for IoLab apps migration

@@ -310,6 +310,10 @@ Outputs:
     Description: Bastion IP
     Value: !Ref eipBastion
 
+  OutAlbDnsName:
+    Description: ALB DNS Name
+    Value: !GetAtt ALB.DNSName
+
   OutHTTPALBListener:
     Description: HTTP ALB Listener
     Value: !Ref HTTPALBListener
